@@ -1,0 +1,33 @@
+// API to interface with the libnfc
+
+package nfc
+
+// maximum length for an NFC connection string
+const BUFSIZE_CONNSTRING = 1024
+
+// properties
+const (
+	TIMEOUT_COMMAND = iota
+	TIMEOUT_ATR
+	TIMEOUT_COM
+	TIMEOUT_CRC
+	HANDLE_CRC
+	HANDLE_PARITY
+	ACTIVATE_FIELD
+	ACTIVATE_CRYPTO1
+	INFINITE_SELECT
+	ACCEPT_INVALID_FRAMES
+	ACCEPT_MULTIPLE_FRAMES
+	AUTO_ISO14443_4
+	EASY_FRAMING
+	FORCE_ISO14443_A
+	FORCE_ISO14443_B
+	FORCE_SPEED_106
+)
+
+// NFC D.E.P. (Data Exchange Protocol) active/passive mode
+const (
+	NDM_UNDEFINED = iota
+	NDM_PASSIVE
+	NDM_ACTIVE
+)
