@@ -1,8 +1,38 @@
 package nfc
 
-// #cgo LDFLAGS: -lnfc
-// #include <stdlib.h>
-// #include <nfc/nfc.h>
+/*
+#cgo LDFLAGS: -lnfc
+#include <stdlib.h>
+#include <nfc/nfc.h>
+
+struct device_listing {
+	int count;
+	char *entries;
+
+};
+
+struct device_listing list_devices_wrapper(nfc_context *context) {
+	size_t cstr_len = 16, actual_count; // arbitrary
+	nfc_connstring *cstr = NULL;
+	struct device_listing dev;
+
+	// call nfc_list_devices as long as our array might be too short
+	for (;;) {
+		cstr = realloc(cstr, cstr_len * sizeof *cstr);
+
+		actual_count = nfc_list_devices(context, cstr, cstr_len);
+
+		if (actual_count < cstr_len) break;
+
+		cstr_len += 16;
+	}
+
+	dev.count = actual_count;
+	dev.entries = (char*)cstr;
+
+	return dev;
+}
+*/
 import "C"
 import "errors"
 import "unsafe"
@@ -42,7 +72,7 @@ func (c *context) deinitContext() {
 }
 
 // Open an NFC device. See documentation of Open() for more details
-func (c *context) open(conn string) (d Device, err error) {
+func (c *context) open(conn string) (d *Device, err error) {
 	c.m.Lock()
 	defer c.m.Unlock()
 	c.initContext()
@@ -63,7 +93,34 @@ func (c *context) open(conn string) (d Device, err error) {
 	return
 }
 
-// NFC device
+// Scan for discoverable supported devices (ie. only available for some drivers.
+// Returns a slice of strings that can be passed to Open() to open the devices
+// found.
+func ListDevices() []string {
+	return theContext.listDevices()
+}
+
+// See ListDevices() for documentation
+func (c *context) listDevices() []string {
+	c.m.Lock()
+	defer c.m.Unlock()
+	c.initContext()
+
+	dev := C.list_devices_wrapper(c.c)
+	dev_entries := C.GoBytes(unsafe.Pointer(dev.entries), dev.count*BUFSIZE_CONNSTRING)
+	devices := make([]string, dev.count)
+
+	for i := range devices {
+		charptr := (*C.char)(unsafe.Pointer(&dev_entries[i*BUFSIZE_CONNSTRING]))
+		devices[i] = connstring{charptr}.String()
+	}
+
+	C.free(unsafe.Pointer(dev.entries))
+
+	return devices
+}
+
+// NFC device. Copying these structs may cause unintended side effects.
 type Device struct {
 	d *C.nfc_device
 }
@@ -71,7 +128,7 @@ type Device struct {
 // the error returned by the last operation on d. Every function that wraps some
 // functions operating on an nfc_device should call this function and return the
 // result. This wraps nfc_device_get_last_error.
-func (d Device) lastError() error {
+func (d *Device) lastError() error {
 	err := Error(C.nfc_device_get_last_error(d.d))
 
 	if err == 0 {
@@ -79,6 +136,43 @@ func (d Device) lastError() error {
 	}
 
 	return err
+}
+
+// Close an NFC device.
+func (d *Device) Close() error {
+	if d.d == nil {
+		// closing a closed device is a nop
+		return nil
+	}
+
+	C.nfc_close(d.d)
+	d.d = nil
+
+	return nil
+}
+
+// Abort current running command. Some commands (ie. TargetInit()) are blocking
+// functions and will return only in particular conditions (ie. external
+// initiator request). This function attempt to abort the current running
+// command.
+func (d *Device) AbortCommand() error {
+	if d.d == nil {
+		return errors.New("Device closed")
+	}
+
+	return Error(C.nfc_abort_command(d.d))
+}
+
+// Turn NFC device in idle mode. In initiator mode, the RF field is turned off
+// and the device is set to low power mode (if avaible); In target mode, the
+// emulation is stoped (no target available from external initiator) and the
+// device is set to low power mode (if avaible).
+func (d *Device) Idle() error {
+	if d.d == nil {
+		return errors.New("Device closed")
+	}
+
+	return Error(C.nfc_idle(d.d))
 }
 
 // Connection string

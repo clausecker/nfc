@@ -32,7 +32,8 @@ const (
 	NDM_ACTIVE
 )
 
-// an error as reported by various methods of Device
+// an error as reported by various methods of Device. If device returns an error
+// that is not castable to Error, something outside on the Go side went wrong.
 type Error int
 
 // replicates the behavior of nfc_errstr.
@@ -89,6 +90,11 @@ var theContext *context
 // open a connection to an NFC device. If conn is "", the first available device
 // will be used. If this operation fails, check the log on stderr for more
 // details as the libnfc is not particulary verbose to us.
-func Open(conn string) (Device, error) {
+//
+// Depending on the desired operation mode, the device needs to be configured
+// by using InitiatorInit() or TargetInit(), optionally followed by manual
+// tuning of the parameters if the default parameters are not suiting your
+// goals.
+func Open(conn string) (*Device, error) {
 	return theContext.open(conn)
 }
