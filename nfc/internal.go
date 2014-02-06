@@ -46,12 +46,6 @@ func (d Device) lastError() error {
 	return err
 }
 
-// NFC device driver. Not implemented because there is no way to get an
-// nfc_driver object.
-type Driver struct {
-	driver *C.nfc_driver
-}
-
 // Connection string
 type connstring struct {
 	ptr *C.char
