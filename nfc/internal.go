@@ -12,7 +12,7 @@ struct device_listing {
 };
 
 struct device_listing list_devices_wrapper(nfc_context *context) {
-	size_t cstr_len = 16, actual_count; // arbitrary
+	size_t cstr_len = 16, actual_count; // 16
 	nfc_connstring *cstr = NULL;
 	struct device_listing dev;
 
