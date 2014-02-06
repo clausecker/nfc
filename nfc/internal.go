@@ -38,6 +38,13 @@ import "errors"
 import "unsafe"
 import "sync"
 
+// Get library version. This function returns the version of the libnfc wrapped
+// by this package as returned by nfc_version().
+func Version() string {
+	cstr := C.nfc_version()
+	return C.GoString(cstr)
+}
+
 // NFC context
 type context struct {
 	c *C.nfc_context
@@ -88,6 +95,7 @@ func (c *context) open(conn string) (d *Device, err error) {
 
 	if dev == nil {
 		err = errors.New("Cannot open NFC device")
+		return
 	}
 
 	d = &Device{dev}
