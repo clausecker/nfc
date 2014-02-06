@@ -82,3 +82,13 @@ var errorMessages = map[int]string{
 	ERFTRANS:     "RF Transmission Error",
 	ECHIP:        "Device's Internal Chip Error",
 }
+
+// the global library context
+var theContext *context
+
+// open a connection to an NFC device. If conn is "", the first available device
+// will be used. If this operation fails, check the log on stderr for more
+// details as the libnfc is not particulary verbose to us.
+func Open(conn string) (Device, error) {
+	return theContext.open(conn)
+}
