@@ -33,6 +33,19 @@ type Device struct {
 	device *C.nfc_device
 }
 
+// the error returned by the last operation on d. Every function that wraps some
+// functions operating on an nfc_device should call this function and return the
+// result. This wraps nfc_device_get_last_error.
+func (d Device) lastError() error {
+	err := Error(C.nfc_device_get_last_error(d.device))
+
+	if err == 0 {
+		return nil
+	}
+
+	return err
+}
+
 // NFC device driver. Not implemented because there is no way to get an
 // nfc_driver object.
 type Driver struct {
