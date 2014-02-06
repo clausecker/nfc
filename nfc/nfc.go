@@ -155,7 +155,7 @@ var errorMessages = map[int]string{
 }
 
 // the global library context
-var theContext *context
+var theContext *context = &context{}
 
 // open a connection to an NFC device. If conn is "", the first available device
 // will be used. If this operation fails, check the log on stderr for more

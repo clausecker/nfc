@@ -84,12 +84,14 @@ func (c *context) open(conn string) (d *Device, err error) {
 
 	defer cs.Free()
 
-	d.d = C.nfc_open(c.c, cs.ptr)
+	dev := C.nfc_open(c.c, cs.ptr)
 
-	if d.d == nil {
+	if dev == nil {
 		err = errors.New("Cannot open NFC device")
 	}
 
+	d = &Device{dev}
+	err = d.lastError()
 	return
 }
 
@@ -181,7 +183,12 @@ type connstring struct {
 }
 
 func (c connstring) String() string {
-	return C.GoStringN(c.ptr, BUFSIZE_CONNSTRING)
+	str := C.GoStringN(c.ptr, BUFSIZE_CONNSTRING)
+	i := 0
+
+	for ; i < len(str) && str[i] != '\000'; i++ { }
+
+	return str[:i+1]
 }
 
 // Makes a connstring. Notice that the string must not be longer than
