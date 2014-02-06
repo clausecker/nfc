@@ -185,6 +185,28 @@ func (d *Device) Idle() error {
 	return Error(C.nfc_idle(d.d))
 }
 
+// Print information about an NFC device.
+func (d *Device) Information() (string, error) {
+	if d.d == nil {
+		return "", errors.New("Device closed")
+	}
+
+	var ptr *C.char
+	buflen := C.nfc_device_get_information_about(d.d, &ptr)
+
+	if buflen < 0 {
+		return "", Error(buflen)
+	}
+
+	// documentation for nfc_device_get_information_about says that buflen
+	// contains the length of the string that is returned. Apparently, for
+	// some drivers, buflen is always 0 so we disregard it.
+	str := C.GoString(ptr)
+	C.nfc_free(unsafe.Pointer(ptr))
+
+	return str, nil
+}
+
 // Connection string
 type connstring struct {
 	ptr *C.char
@@ -194,7 +216,8 @@ func (c connstring) String() string {
 	str := C.GoStringN(c.ptr, BUFSIZE_CONNSTRING)
 	i := 0
 
-	for ; i < len(str) && str[i] != '\000'; i++ { }
+	for ; i < len(str) && str[i] != '\000'; i++ {
+	}
 
 	return str[:i+1]
 }
