@@ -37,6 +37,7 @@ import "C"
 import "errors"
 import "unsafe"
 import "sync"
+import "fmt"
 
 // Get library version. This function returns the version of the libnfc wrapped
 // by this package as returned by nfc_version().
@@ -205,6 +206,37 @@ func (d *Device) Information() (string, error) {
 	C.nfc_free(unsafe.Pointer(ptr))
 
 	return str, nil
+}
+
+// Returns the device's connection string. If the device has been closed before,
+// this function returns the empty string.
+func (d *Device) Connection() string {
+	if d.d == nil {
+		return ""
+	}
+
+	cptr := C.nfc_device_get_connstring(d.d)
+	return C.GoString(cptr)
+}
+
+// Returns the device's name. This information is not enough to uniquely
+// determine the device.
+func (d *Device) String() string {
+	if d.d == nil {
+		return ""
+	}
+
+	cptr := C.nfc_device_get_name(d.d)
+	return C.GoString(cptr)
+}
+
+// Return Go code that could be used to reproduce this device.
+func (d *Device) GoString() string {
+	if d.d == nil {
+		return "nil"
+	}
+
+	return fmt.Sprintf("nfc.Open(%q)", d.Connection())
 }
 
 // Connection string
