@@ -3,6 +3,7 @@ package nfc
 // #include <nfc/nfc.h>
 import "C"
 import "unsafe"
+import "errors"
 
 // make a slice with bytes from buf and length l that does not overlay over buf
 func byteSliceFromC(buf *C.uint8_t, l C.size_t) []byte {
@@ -67,6 +68,43 @@ func TargetString(t Target, verbose bool) (string, error) {
 	}
 
 	return C.GoStringN(result, C.int(length)), nil
+}
+
+// Make a target from a pointer to an nfc_target. If the object you pass it not
+// an nfc_target, undefined behavior occurs and your program is likely to blow
+// up.
+func UnmarshallTarget(ptr unsafe.Pointer) Target {
+	t := (*C.nfc_target)(ptr)
+	m := Modulation{Type: int(t.nm.nmt), BaudRate: int(t.nm.nbr)}
+
+	switch m.Type {
+	case ISO14443A:
+		r := unmarshallISO14443aTarget((*C.nfc_iso14443a_info)(ptr), m)
+		return &r
+	case JEWEL:
+		r := unmarshallJewelTarget((*C.nfc_jewel_info)(ptr), m)
+		return &r
+	case ISO14443B:
+		r := unmarshallISO14443bTarget((*C.nfc_iso14443b_info)(ptr), m)
+		return &r
+	case ISO14443BI:
+		r := unmarshallISO14443biTarget((*C.nfc_iso14443bi_info)(ptr), m)
+		return &r
+	case ISO14443B2SR:
+		r := unmarshallISO14443b2srTarget((*C.nfc_iso14443b2sr_info)(ptr), m)
+		return &r
+	case ISO14443B2CT:
+		r := unmarshallISO14443b2ctTarget((*C.nfc_iso14443b2ct_info)(ptr), m)
+		return &r
+	case FELICA:
+		r := unmarshallFelicaTarget((*C.nfc_felica_info)(ptr), m)
+		return &r
+	case DEP:
+		r := unmarshallDEPTarget((*C.nfc_dep_info)(ptr), m)
+		return &r
+	default:
+		panic(errors.New("Cannot determine target type"))
+	}
 }
 
 // NFC D.E.P. (Data Exchange Protocol) active/passive mode
