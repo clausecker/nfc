@@ -136,6 +136,12 @@ type Device struct {
 	d *C.nfc_device
 }
 
+// Return a pointer to the wrapped nfc_device. This is useful if you try to use
+// this wrapper to wrap other C code that builds onto the libnfc.
+func (d *Device) Pointer() uintptr {
+	return uintptr(unsafe.Pointer(d.d))
+}
+
 // the error returned by the last operation on d. Every function that wraps some
 // functions operating on an nfc_device should call this function and return the
 // result. This wraps nfc_device_get_last_error.
