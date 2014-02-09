@@ -24,6 +24,18 @@ func makeTarget(mod, baud int) unsafe.Pointer {
 	return ptr
 }
 
+// generic implementation for the String() functions of the Target interface.
+// Notice that this panics when TargetString returns an error.
+func tString(t Target) string {
+	str, err := TargetString(t, true)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return str
+}
+
 // Go wrapper for nfc_target. Since the nfc_target structure contains a union,
 // we cannot directly map it to a Go type. Modulation() can be used to figure
 // out what kind of modulation was used for this Target and what type an
@@ -37,7 +49,24 @@ func makeTarget(mod, baud int) unsafe.Pointer {
 type Target interface {
 	Modulation() Modulation
 	Marshall() uintptr
-	String() string // uses str_nfc_target
+	String() string // uses TargetString() with verbose = true
+}
+
+// Make a string from a target with proper error reporting. This is a wrapper
+// around str_nfc_target.
+func TargetString(t Target, verbose bool) (string, error) {
+	ptr := unsafe.Pointer(t.Marshall())
+
+	var result *C.char = nil
+
+	length := C.str_nfc_target(&result, (*C.nfc_target)(ptr), C.bool(verbose))
+	defer C.nfc_free(unsafe.Pointer(result))
+
+	if length < 0 {
+		return "", Error(length)
+	}
+
+	return C.GoStringN(result, C.int(length)), nil
 }
 
 // NFC D.E.P. (Data Exchange Protocol) active/passive mode
@@ -59,6 +88,10 @@ type DEPTarget struct {
 	GB      []byte   // general bytes, up to 48 bytes
 	DepMode int      // DEP mode
 	Baud    int      // Baud rate
+}
+
+func (t *DEPTarget) String() string {
+	return tString(t)
 }
 
 // Type is always DEP
@@ -118,6 +151,10 @@ type ISO14443aTarget struct {
 	Baud int    // Baud rate
 }
 
+func (t *ISO14443aTarget) String() string {
+	return tString(t)
+}
+
 // Type is always ISO14443A
 func (t *ISO14443aTarget) Modulation() Modulation {
 	return Modulation{ISO14443A, t.Baud}
@@ -165,6 +202,10 @@ type FelicaTarget struct {
 	Pad     [8]byte
 	SysCode [2]byte
 	Baud    int
+}
+
+func (t *FelicaTarget) String() string {
+	return tString(t)
 }
 
 // Type is always FELICA
@@ -224,6 +265,10 @@ type ISO14443bTarget struct {
 	Baud            int
 }
 
+func (t *ISO14443bTarget) String() string {
+	return tString(t)
+}
+
 // Type is always ISO14443B
 func (t *ISO14443bTarget) Modulation() Modulation {
 	return Modulation{ISO14443B, t.Baud}
@@ -278,6 +323,10 @@ type ISO14443biTarget struct {
 	Baud   int
 }
 
+func (t *ISO14443biTarget) String() string {
+	return tString(t)
+}
+
 // Type is always ISO14443BI
 func (t *ISO14443biTarget) Modulation() Modulation {
 	return Modulation{ISO14443BI, t.Baud}
@@ -323,6 +372,10 @@ type ISO14443b2srTarget struct {
 	Baud int
 }
 
+func (t *ISO14443b2srTarget) String() string {
+	return tString(t)
+}
+
 // Type is always ISO14443B2SR
 func (t *ISO14443b2srTarget) Modulation() Modulation {
 	return Modulation{ISO14443B2SR, t.Baud}
@@ -356,6 +409,10 @@ type ISO14443b2ctTarget struct {
 	ProdCode byte
 	FabCode  byte
 	Baud     int
+}
+
+func (t *ISO14443b2ctTarget) String() string {
+	return tString(t)
 }
 
 // Type is always ISO1444B2CT
@@ -397,6 +454,10 @@ type JewelTarget struct {
 	SensRes [2]byte
 	Id      [4]byte
 	Baud    int
+}
+
+func (t *JewelTarget) String() string {
+	return tString(t)
 }
 
 // Type is always JEWEL
