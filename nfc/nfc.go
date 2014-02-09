@@ -97,12 +97,32 @@ const (
 	FORCE_SPEED_106
 )
 
-// NFC D.E.P. (Data Exchange Protocol) active/passive mode
+// NFC modulation types
 const (
-	UNDEFINED = iota
-	PASSIVE
-	ACTIVE
+	ISO14443A = iota + 1
+	JEWEL
+	ISO14443B
+	ISO14443BI   // pre-ISO14443B aka ISO/IEC 14443 B' or Type B'
+	ISO14443B2SR // ISO14443-2B ST SRx
+	ISO14443B2CT // ISO14443-2B ASK CTx
+	FELICA
+	DEP
 )
+
+// NFC baud rates. UNDEFINED is also a valid baud rate, albeit defined
+// further below.
+const (
+	NBR_106 = iota + 1
+	NBR_212
+	NBR_424
+	NBR_847
+)
+
+// NFC modulation structure. Use the supplied constants.
+type Modulation struct {
+	Type     int
+	BaudRate int
+}
 
 // An error as reported by various methods of Device. If device returns an error
 // that is not castable to Error, something outside on the Go side went wrong.
