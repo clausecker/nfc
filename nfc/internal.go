@@ -192,6 +192,60 @@ func (d *Device) Idle() error {
 	return Error(C.nfc_idle(d.d))
 }
 
+// Initialize NFC device as initiator (reader). After initialization it can be
+// used to communicate to passive RFID tags and active NFC devices. The reader
+// will act as initiator to communicate peer 2 peer (NFCIP) to other active NFC
+// devices. The NFC device will be initialized with the following properties:
+//  * CRC is handled by the device (NP_HANDLE_CRC = true)
+//  * Parity is handled the device (NP_HANDLE_PARITY = true)
+//  * Cryto1 cipher is disabled (NP_ACTIVATE_CRYPTO1 = false)
+//  * Easy framing is enabled (NP_EASY_FRAMING = true)
+//  * Auto-switching in ISO14443-4 mode is enabled (NP_AUTO_ISO14443_4 = true)
+//  * Invalid frames are not accepted (NP_ACCEPT_INVALID_FRAMES = false)
+//  * Multiple frames are not accepted (NP_ACCEPT_MULTIPLE_FRAMES = false)
+//  * 14443-A mode is activated (NP_FORCE_ISO14443_A = true)
+//  * speed is set to 106 kbps (NP_FORCE_SPEED_106 = true)
+//  * Let the device try forever to find a target (NP_INFINITE_SELECT = true)
+//  * RF field is shortly dropped (if it was enabled) then activated again
+func (d *Device) InitiatorInit() error {
+	if d.d == nil {
+		return errors.New("Device closed")
+	}
+
+	return Error(C.nfc_initiator_init(d.d))
+}
+
+// Initialize NFC device as initiator with its secure element initiator
+// (reader). After initialization it can be used to communicate with the secure
+// element. The RF field is deactivated in order to save power
+func (d *Device) InitiatorInitSecureElement() error {
+	if d.d == nil {
+		return errors.New("Device closed")
+	}
+
+	return Error(C.nfc_initiator_init_secure_element(d.d))
+}
+
+// Select a passive or emulated tag.
+func (d *Device) InitiatorSelectPassiveTarget(m Modulation, initData []byte) (*Target, error) {
+	if d.d == nil {
+		return nil, errors.New("Device closed")
+	}
+
+	var pnt C.nfc_target
+
+	err := Error(C.nfc_initiator_select_passive_target(
+		d.d,
+		C.nfc_modulation{C.nfc_modulation_type(m.Type), C.nfc_baud_rate(m.BaudRate)},
+		(*C.uint8_t)(&initData[0]),
+		C.size_t(len(initData)),
+		&pnt))
+
+	// TODO: convert pnt to a Target
+
+	return nil, err
+}
+
 // Print information about an NFC device.
 func (d *Device) Information() (string, error) {
 	if d.d == nil {
