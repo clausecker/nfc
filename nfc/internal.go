@@ -227,7 +227,7 @@ func (d *Device) InitiatorInitSecureElement() error {
 }
 
 // Select a passive or emulated tag.
-func (d *Device) InitiatorSelectPassiveTarget(m Modulation, initData []byte) (*Target, error) {
+func (d *Device) InitiatorSelectPassiveTarget(m Modulation, initData []byte) (Target, error) {
 	if d.d == nil {
 		return nil, errors.New("Device closed")
 	}
@@ -243,7 +243,7 @@ func (d *Device) InitiatorSelectPassiveTarget(m Modulation, initData []byte) (*T
 
 	// TODO: convert pnt to a Target
 
-	return nil, err
+	return unmarshallTarget(&pnt), err
 }
 
 // Print information about an NFC device.

@@ -74,7 +74,12 @@ func TargetString(t Target, verbose bool) (string, error) {
 // an nfc_target, undefined behavior occurs and your program is likely to blow
 // up.
 func UnmarshallTarget(ptr unsafe.Pointer) Target {
-	t := (*C.nfc_target)(ptr)
+	return unmarshallTarget((*C.nfc_target)(ptr))
+}
+
+// internal wrapper with C types for conveinience
+func unmarshallTarget(t *C.nfc_target) Target {
+	ptr := unsafe.Pointer(t)
 	m := Modulation{Type: int(t.nm.nmt), BaudRate: int(t.nm.nbr)}
 
 	switch m.Type {
