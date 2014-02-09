@@ -3,6 +3,8 @@
 // documentation is taken unchanged from the documentation inside the libnfc.
 package nfc
 
+import "fmt"
+
 // Maximum length for an NFC connection string
 const BUFSIZE_CONNSTRING = 1024
 
@@ -102,14 +104,16 @@ const (
 	ACTIVE
 )
 
-// an error as reported by various methods of Device. If device returns an error
+// An error as reported by various methods of Device. If device returns an error
 // that is not castable to Error, something outside on the Go side went wrong.
 type Error int
 
-// replicates the behavior of nfc_errstr.
+// Returns the same strings as nfc_errstr except if the error is not among the
+// known errors. Instead of reporting an "Unknown error", Error() will return
+// something like "Error -123".
 func (e Error) Error() string {
 	if errorMessages[int(e)] == "" {
-		return "Unknown error"
+		return fmt.Sprintf("Error %d", int(e))
 	}
 
 	return errorMessages[int(e)]
