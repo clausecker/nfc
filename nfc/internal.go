@@ -6,22 +6,33 @@ package nfc
 #include <nfc/nfc.h>
 
 struct device_listing {
-	int count;
+	int count; // is an error code if negative
 	char *entries;
 
 };
 
+struct target_listing {
+	int count; // is an error code if negative
+	nfc_target *entries;
+};
+
 struct device_listing list_devices_wrapper(nfc_context *context) {
-	size_t cstr_len = 16, actual_count; // 16
-	nfc_connstring *cstr = NULL;
+	size_t cstr_len = 16, actual_count;
+	nfc_connstring *cstr = NULL, *cstr_tmp;
 	struct device_listing dev;
 
 	// call nfc_list_devices as long as our array might be too short
 	for (;;) {
-		cstr = realloc(cstr, cstr_len * sizeof *cstr);
+		cstr_tmp = realloc(cstr, cstr_len * sizeof *cstr);
+		if (cstr_tmp == NULL) {
+			actual_count = NFC_ESOFT;
+			break;
+		}
 
+		cstr = cstr_tmp;
 		actual_count = nfc_list_devices(context, cstr, cstr_len);
 
+		// also covers the case where actual_count is an error
 		if (actual_count < cstr_len) break;
 
 		cstr_len += 16;
@@ -32,12 +43,48 @@ struct device_listing list_devices_wrapper(nfc_context *context) {
 
 	return dev;
 }
+
+// this function works analogeous to list_devices_wrapper but for the function
+// nfc_initiator_list_passive_targets.
+struct target_listing list_targets_wrapper(nfc_device *device, const nfc_modulation nm) {
+	size_t targets_len = 16, actual_count; // 16
+	nfc_target *targets = NULL, *targets_tmp;
+	struct target_listing  tar;
+
+	// call nfc_list_devices as long as our array might be too short
+	for (;;) {
+		targets_tmp = realloc(targets, targets_len * sizeof *targets);
+		if (targets_tmp == NULL) {
+			actual_count = NFC_ESOFT;
+			break;
+		}
+
+		targets = targets_tmp;
+		actual_count = nfc_initiator_list_passive_targets(device, nm, targets, targets_len);
+
+		// also covers the case where actual_count is an error
+		if (actual_count < targets_len) break;
+
+		targets_len += 16;
+	}
+
+	tar.count = actual_count;
+	tar.entries = targets;
+
+	return tar;
+}
+
+// Accessing arrays from Go is difficult. We use this helper instead.
+nfc_target *index_targets(nfc_target *t, int index) {
+	return t + index;
+}
+
 */
 import "C"
 import "errors"
-import "unsafe"
-import "sync"
 import "fmt"
+import "sync"
+import "unsafe"
 
 // Get library version. This function returns the version of the libnfc wrapped
 // by this package as returned by nfc_version().
@@ -107,28 +154,31 @@ func (c *context) open(conn string) (d *Device, err error) {
 // Scan for discoverable supported devices (ie. only available for some drivers.
 // Returns a slice of strings that can be passed to Open() to open the devices
 // found.
-func ListDevices() []string {
+func ListDevices() ([]string, error) {
 	return theContext.listDevices()
 }
 
 // See ListDevices() for documentation
-func (c *context) listDevices() []string {
+func (c *context) listDevices() ([]string, error) {
 	c.m.Lock()
 	defer c.m.Unlock()
 	c.initContext()
 
 	dev := C.list_devices_wrapper(c.c)
-	dev_entries := C.GoBytes(unsafe.Pointer(dev.entries), dev.count*BUFSIZE_CONNSTRING)
-	devices := make([]string, dev.count)
+	defer C.free(unsafe.Pointer(dev.entries))
+	if dev.count < 0 {
+		return nil, Error(dev.count)
+	}
 
+	dev_entries := C.GoBytes(unsafe.Pointer(dev.entries), dev.count*BUFSIZE_CONNSTRING)
+
+	devices := make([]string, dev.count)
 	for i := range devices {
 		charptr := (*C.char)(unsafe.Pointer(&dev_entries[i*BUFSIZE_CONNSTRING]))
 		devices[i] = connstring{charptr}.String()
 	}
 
-	C.free(unsafe.Pointer(dev.entries))
-
-	return devices
+	return devices, nil
 }
 
 // NFC device. Copying these structs may cause unintended side effects.
@@ -217,7 +267,7 @@ func (d *Device) InitiatorInit() error {
 
 // Initialize NFC device as initiator with its secure element initiator
 // (reader). After initialization it can be used to communicate with the secure
-// element. The RF field is deactivated in order to save power
+// element. The RF field is deactivated in order to save power.
 func (d *Device) InitiatorInitSecureElement() error {
 	if d.d == nil {
 		return errors.New("Device closed")
@@ -241,9 +291,33 @@ func (d *Device) InitiatorSelectPassiveTarget(m Modulation, initData []byte) (Ta
 		C.size_t(len(initData)),
 		&pnt))
 
-	// TODO: convert pnt to a Target
-
 	return unmarshallTarget(&pnt), err
+}
+
+// List passive or emulated tags. The NFC device will try to find the available
+// passive tags. Some NFC devices are capable to emulate passive tags. The
+// standards (ISO18092 and ECMA-340) describe the modulation that can be used
+// for reader to passive communications. The chip needs to know with what kind
+// of tag it is dealing with, therefore the initial modulation and speed (106,
+// 212 or 424 kbps) should be supplied.
+func (d *Device) InitiatorListPassiveTargets(m Modulation) ([]Target, error) {
+	mod := C.nfc_modulation{
+		nmt: C.nfc_modulation_type(m.Type),
+		nbr: C.nfc_baud_rate(m.BaudRate),
+	}
+
+	tar := C.list_targets_wrapper(d.d, mod)
+	defer C.free(unsafe.Pointer(tar.entries))
+	if tar.count < 0 {
+		return nil, Error(tar.count)
+	}
+
+	targets := make([]Target, tar.count)
+	for i := range targets {
+		targets[i] = unmarshallTarget(C.index_targets(tar.entries, C.int(i)))
+	}
+
+	return targets, nil
 }
 
 // Print information about an NFC device.
