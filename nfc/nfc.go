@@ -1,6 +1,6 @@
-// This package wraps the libnfc to provide an API for Go. Some functions and
-// names have been altered to fit the conventions and idioms used in Go. Most
-// documentation is taken unchanged from the documentation inside the libnfc.
+// This package wraps the libnfc to provide an API for Go. Most documentation
+// was taken unchanged from the documentation inside the libnfc. Some functions
+// and names have been altered to fit the conventions and idioms used in Go.
 package nfc
 
 import "fmt"

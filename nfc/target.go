@@ -46,7 +46,7 @@ func tString(t Target) string {
 // contains the same data as the Target. Don't forget to C.free() the result of
 // Marshall() afterwards. A runtime panic may occur if any slice referenced by a
 // Target has been made larger than the maximum length mentioned in the
-// brespective comments.
+// respective comments.
 type Target interface {
 	Modulation() Modulation
 	Marshall() uintptr

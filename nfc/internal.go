@@ -101,19 +101,20 @@ type context struct {
 
 // Initialize the library. This is an internal function that assumes that the
 // appropriate lock is held by the surrounding function. This function is a nop
-// if the library is already initialized.
-func (c *context) initContext() error {
+// if the library is already initialized. This function panics if the library
+// cannot be initialized for any reason.
+func (c *context) initContext() {
 	if c.c != nil {
-		return nil
+		return
 	}
 
 	C.nfc_init(&c.c)
 
 	if c.c == nil {
-		return errors.New("Cannot initialize libnfc")
+		panic(errors.New("Cannot initialize libnfc"))
 	}
 
-	return nil
+	return
 }
 
 // deinitialize the library
@@ -196,6 +197,10 @@ func (d *Device) Pointer() uintptr {
 // functions operating on an nfc_device should call this function and return the
 // result. This wraps nfc_device_get_last_error.
 func (d *Device) lastError() error {
+	if d.d == nil {
+		return errors.New("Device closed")
+	}
+
 	err := Error(C.nfc_device_get_last_error(d.d))
 
 	if err == 0 {
