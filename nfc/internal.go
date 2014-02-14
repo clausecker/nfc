@@ -210,6 +210,256 @@ func (d *Device) lastError() error {
 	return err
 }
 
+// Send data to target then retrieve data from target. n contains received bytes
+// count on success, or is meaningless on error. The current implementation will
+// return the libnfc error code in case of error, but this is subject to change.
+// This function will return EOVFLOW if more bytes are being received than the
+// length of rx.
+//
+// The NFC device (configured as initiator) will transmit the supplied bytes
+// (tx) to the target. It waits for the response and stores the received bytes
+// in rx. If the received bytes exceed rx, the error status will be NFC_EOVFLOW
+// and rx will contain len(rx) received bytes.
+//
+// If EASY_FRAMING option is disabled the frames will sent and received in raw
+// mode: PN53x will not handle input neither output data.
+//
+// The parity bits are handled by the PN53x chip. The CRC can be generated
+// automatically or handled manually. Using this function, frames can be
+// communicated very fast via the NFC initiator to the tag.
+//
+// Tests show that on average this way of communicating is much faster than
+// using the regular driver/middle-ware (often supplied by manufacturers).
+//
+// Warning: The configuration option HANDLE_PARITY must be set to true (the
+// default value).
+//
+// If timeout equals to 0, the function blocks indefinitely (until an error is
+// raised or function is completed). If timeout equals to -1, the default
+// timeout will be used.
+func (d *Device) InitiatorTransceiveBytes(tx, rx []byte, timeout int) (n int, err error) {
+	if d.d == nil {
+		return ESOFT, errors.New("Device closed")
+	}
+
+	txptr := (*C.uint8_t)(&tx[0])
+	rxptr := (*C.uint8_t)(&rx[0])
+
+	n = int(C.nfc_initiator_transceive_bytes(
+		d.d,
+		txptr, C.size_t(len(tx)),
+		rxptr, C.size_t(len(rx)),
+		C.int(timeout),
+	))
+
+	if n < 0 {
+		err = Error(n)
+	}
+
+	return
+}
+
+// Transceive raw bit-frame to a target. n contains the received byte count on
+// success, or is meaningless on error. The current implementation will return
+// the libnfc error code in case of error, but this is subject to change. If
+// txLength is longer than the supplied slice, an error will occur. txPar has to
+// have the same length as tx, dito for rxPar and rx. An error will occur if any
+// of these invariants do not hold.
+//
+// tx contains a byte slice of the frame that needs to be transmitted. txLength
+// contains its length in bits.
+//
+// For example the REQA (0x26) command (the first anti-collision command of
+// ISO14443-A) must be precise 7 bits long. This is not possible using
+// (*Device).InitiatorTransceiveBytes(). With that function you can only
+// communicate frames that consist of full bytes. When you send a full byte (8
+// bits + 1 parity) with the value of REQA (0x26), a tag will simply not
+// respond.
+//
+// txPar contains a byte slice of the corresponding parity bits needed to send
+// per byte.
+//
+// For example if you send the SELECT_ALL (0x93, 0x20) = [ 10010011, 00100000 ]
+// command, you have to supply the following parity bytes (0x01, 0x00) to define
+// the correct odd parity bits. This is only an example to explain how it works,
+// if you just are sending two bytes with ISO14443-A compliant parity bits you
+// better can use the (*Device).InitiatorTransceiveBytes() method.
+//
+// rx will contain the response from the target. This function will return
+// EOVFLOW if more bytes are received than the length of rx. rxPar contains a
+// byte slice of the corresponding parity bits.
+//
+// The NFC device (configured as initiator) will transmit low-level messages
+// where only the modulation is handled by the PN53x chip. Construction of the
+// frame (data, CRC and parity) is completely done by libnfc.  This can be very
+// useful for testing purposes. Some protocols (e.g. MIFARE Classic) require to
+// violate the ISO14443-A standard by sending incorrect parity and CRC bytes.
+// Using this feature you are able to simulate these frames.
+func (d *Device) InitiatorTransceiveBits(tx, txPar []byte, txLength int, rx, rxPar []byte) (n int, err error) {
+	if d.d == nil {
+		return ESOFT, errors.New("Device closed")
+	}
+
+	if len(tx) != len(txPar) || len(rx) != len(rxPar) {
+		return ESOFT, errors.New("Invariant doesn't hold")
+	}
+
+	if len(tx) < 8*txLength {
+		return ESOFT, errors.New("Slice shorter than specified bit count")
+	}
+
+	txptr := (*C.uint8_t)(&tx[0])
+	txparptr := (*C.uint8_t)(&txPar[0])
+	rxptr := (*C.uint8_t)(&rx[0])
+	rxparptr := (*C.uint8_t)(&rxPar[0])
+
+	n = int(C.nfc_initiator_transceive_bits(
+		d.d,
+		txptr, C.size_t(txLength), txparptr,
+		rxptr, C.size_t(len(rx)), rxparptr,
+	))
+
+	if n < 0 {
+		err = Error(n)
+	}
+
+	return
+}
+
+// Send data to target then retrieve data from target with timing control. n
+// contains the received byte count on success, or is meaningless on error. c
+// will contain the actual number of cycles waited. The current implementation
+// will return the libnfc error code in case of error, but this is subject to
+// change. This function will return EOVFLOW if more bytes are being received
+// than the length of rx.
+//
+// This function is similar to (*Device).InitiatorTransceiveBytes() with the
+// following differences:
+//
+//  - A precise cycles counter will indicate the number of cycles between emission & reception of frames.
+//  - Only modes with EASY_FRAMING option disabled are supported.
+//  - Overall communication with the host is heavier and slower.
+//
+// By default, the timer configuration tries to maximize the precision, which
+// also limits the maximum cycle count before saturation / timeout. E.g. with
+// PN53x it can count up to 65535 cycles, avout 4.8ms with a precision of about
+// 73ns. If you're ok with the defaults, call this function with cycles = 0. If
+// you need to count more cycles, set cycles to the maximum you exprect, but
+// don't forget you'll loose in precision and it'll take more time before
+// timeout, so don't abuse!
+//
+// Warning: The configuration option EASY_FRAMING must be set to false; the
+// configuration option HANDLE_PARITY must be set to true (default value).
+func (d *Device) InitiatorTransceiveBytesTimed(tx, rx []byte, cycles uint32) (n int, c uint32, err error) {
+	if d.d == nil {
+		return ESOFT, 0, errors.New("Device closed")
+	}
+
+	var cptr *C.uint32_t
+	*cptr = C.uint32_t(cycles)
+
+	txptr := (*C.uint8_t)(&tx[0])
+	rxptr := (*C.uint8_t)(&rx[0])
+
+	n = int(C.nfc_initiator_transceive_bytes_timed(
+		d.d,
+		txptr, C.size_t(len(tx)),
+		rxptr, C.size_t(len(rx)),
+		cptr,
+	))
+
+	if n < 0 {
+		err = Error(n)
+	}
+
+	c = uint32(*cptr)
+
+	return
+}
+
+// Transceive raw bit-frames to a target. n contains the received byte count on
+// success, or is meaningless on error. c will contain the actual number of
+// cycles waited. The current implementation will return the libnfc error code
+// in case of error, but this is subject to change. If txLength is longer than
+// the supplied slice, an error will occur. txPar has to have the same length as
+// tx, dito for rxPar and rx. An error will occur if any of these invariants do
+// not hold.
+//
+// This function is similar to (*Device).InitiatorTransceiveBits() with the
+// following differences:
+//
+//  - A precise cycles counter will indicate the number of cycles between emission & reception of frames.
+//  - Only modes with EASY_FRAMING option disabled are supported and CRC must be handled manually.
+//  - Overall communication with the host is heavier and slower.
+//
+// By default the timer configuration tries to maximize the precision, which
+// also limits the maximum cycle count before saturation / timeout. E.g. with
+// PN53x it can count up to 65535 cycles, avout 4.8ms with a precision of about
+// 73ns. If you're ok with the defaults, call this function with cycles = 0. If
+// you need to count more cycles, set cycles to the maximum you exprect, but
+// don't forget you'll loose in precision and it'll take more time before
+// timeout, so don't abuse!
+//
+// Warning: The configuration option EASY_FRAMING must be set to false; the
+// configuration option HANDLE_CRC must be set to false; the configuration
+// option HANDLE_PARITY must be set to true (the default value).
+func (d *Device) InitiatorTransceiveBitsTimed(tx, txPar []byte, txLength int, rx, rxPar []byte, cycles uint32) (n int, c uint32, err error) {
+	if d.d == nil {
+		return ESOFT, 0, errors.New("Device closed")
+	}
+
+	if len(tx) != len(txPar) || len(rx) != len(rxPar) {
+		return ESOFT, 0, errors.New("Invariant doesn't hold")
+	}
+
+	if len(tx) < 8*txLength {
+		return ESOFT, 0, errors.New("Slice shorter than specified bit count")
+	}
+
+	var cptr *C.uint32_t
+	*cptr = C.uint32_t(cycles)
+
+	txptr := (*C.uint8_t)(&tx[0])
+	txparptr := (*C.uint8_t)(&txPar[0])
+	rxptr := (*C.uint8_t)(&rx[0])
+	rxparptr := (*C.uint8_t)(&rxPar[0])
+
+	n = int(C.nfc_initiator_transceive_bits_timed(
+		d.d,
+		txptr, C.size_t(txLength), txparptr,
+		rxptr, C.size_t(len(rx)), rxparptr,
+		cptr,
+	))
+
+	c = uint32(*cptr)
+
+	if n < 0 {
+		err = Error(n)
+	}
+
+	return
+}
+
+// Check target presence. Returns nil on success, an error otherwise. The
+// target has to be selected before you can check its presence. To run the test,
+// one or more commands will be sent to the target.
+func (d *Device) InitiatorTargetIsPresent(t Target) error {
+	if d.d == nil {
+		return errors.New("Device closed")
+	}
+
+	ctarget := (*C.nfc_target)(unsafe.Pointer(t.Marshall()))
+	defer C.free(unsafe.Pointer(ctarget))
+
+	n := C.nfc_initiator_target_is_present(d.d, ctarget)
+
+	if n != 0 {
+		return Error(n)
+	}
+
+	return nil
+}
+
 // Close an NFC device.
 func (d *Device) Close() error {
 	if d.d == nil {
