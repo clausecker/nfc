@@ -38,11 +38,6 @@ struct target_listing list_targets_wrapper(nfc_device *device, const nfc_modulat
 
 	return tar;
 }
-
-// Accessing arrays from Go is difficult. We use this helper instead.
-nfc_target *index_targets(nfc_target *t, int index) {
-	return t + index;
-}
 */
 import "C"
 import "errors"
@@ -370,7 +365,9 @@ func (d *Device) InitiatorListPassiveTargets(m Modulation) ([]Target, error) {
 
 	targets := make([]Target, tar.count)
 	for i := range targets {
-		targets[i] = unmarshallTarget(C.index_targets(tar.entries, C.int(i)))
+		// index the C array using pointer arithmetic
+		ptr := uintptr(unsafe.Pointer(tar.entries)) + uintptr(i)*unsafe.Sizeof(*tar.entries)
+		targets[i] = unmarshallTarget((*C.nfc_target)(unsafe.Pointer(ptr)))
 	}
 
 	return targets, nil
