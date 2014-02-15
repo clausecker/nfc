@@ -8,7 +8,7 @@ import "fmt"
 // Maximum length for an NFC connection string
 const BUFSIZE_CONNSTRING = 1024
 
-// Properties for Device.SetPropertyInt() and Device.SetPropertyBool().
+// Properties for (*Device).SetPropertyInt() and (*Device).SetPropertyBool().
 const (
 	// Default command processing timeout
 	// Property value's (duration) unit is ms and 0 means no timeout (infinite).
@@ -116,6 +116,12 @@ const (
 	NBR_212
 	NBR_424
 	NBR_847
+)
+
+// NFC modes. An NFC device can either be a target or an initiator.
+const (
+	TARGET = iota
+	INITIATOR
 )
 
 // NFC modulation structure. Use the supplied constants.
