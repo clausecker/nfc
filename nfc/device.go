@@ -1,6 +1,7 @@
 package nfc
 
 // #include <nfc/nfc.h>
+// #include <stdlib.h>
 import "C"
 import "unsafe"
 import "errors"
@@ -254,4 +255,193 @@ func (d *Device) SupportedBaudRates(modulationType int) ([]int, error) {
 	}
 
 	return brs, nil
+}
+
+// Initialize NFC device as an emulated tag. n contains the received byte count
+// on success, or is meaningless on error. The current implementation will
+// return the libnfc error code in case of error, but this is subject to change.
+// The returned target tt will be the result of the modifications
+// nfc_target_init() applies to t. Such modifications might happen if you set
+// an Baud or DepMode to UNDEFINED. The fields will be updated with concrete
+// values. timeout contains a timeout in milliseconds.
+//
+// This function initializes NFC device in target mode in order to emulate a tag
+// as the specified target t.
+//  - Crc is handled by the device (HANDLE_CRC = true)
+//  - Parity is handled the device (HANDLE_PARITY = true)
+//  - Cryto1 cipher is disabled (ACTIVATE_CRYPTO1 = false)
+//  - Auto-switching in ISO14443-4 mode is enabled (AUTO_ISO14443_4 = true)
+//  - Easy framing is disabled (EASY_FRAMING = false)
+//  - Invalid frames are not accepted (ACCEPT_INVALID_FRAMES = false)
+//  - Multiple frames are not accepted (ACCEPT_MULTIPLE_FRAMES = false)
+//  - RF field is dropped
+//
+// Warning: Be aware that this function will wait (hang) until a command is
+// received that is not part of the anti-collision. The RATS command for example
+// would wake up the emulator. After this is received, the send and receive
+// functions can be used.
+//
+// If timeout equals to 0, the function blocks indefinitely (until an error is
+// raised or function is completed). If timeout equals to -1, the default
+// timeout will be used.
+func (d *Device) TargetInit(t Target, rx []byte, timeout int) (n int, tt Target, err error) {
+	if d.d == nil {
+		return ESOFT, t, errors.New("device closed")
+	}
+
+	tar := (*C.nfc_target)(unsafe.Pointer(t.Marshall()))
+	defer C.free(unsafe.Pointer(tar))
+
+	n = int(C.nfc_target_init(
+		d.d, tar,
+		(*C.uint8_t)(&rx[0]), C.size_t(len(rx)),
+		C.int(timeout),
+	))
+
+	if n < 0 {
+		err = Error(n)
+	}
+
+	tt = unmarshallTarget(tar)
+	return
+}
+
+// Send bytes and APDU frames. n contains the sent byte count on success, or is
+// meaningless on error. The current implementation will return the libnfc
+// error code in case of error, but this is subject to change. timeout contains
+// a timeout in milliseconds.
+//
+// This function make the NFC device (configured as  target) send byte frames
+// (e.g. APDU responses) to the initiator.
+//
+// If timeout equals to 0, the function blocks indefinitely (until an error is
+// raised or function is completed). If timeout equals to -1, the default
+// timeout will be used.
+func (d *Device) TargetSendBytes(tx []byte, timeout int) (n int, err error) {
+	if d.d == nil {
+		return ESOFT, errors.New("device closed")
+	}
+
+	n = int(C.nfc_target_send_bytes(
+		d.d,
+		(*C.uint8_t)(&tx[0]), C.size_t(len(tx)),
+		C.int(timeout),
+	))
+
+	if n < 0 {
+		err = Error(n)
+	}
+
+	return
+}
+
+// Receive bytes and APDU frames. n contains the received byte count on success,
+// or is meaningless on error. The current implementation will return the libnfc
+// error code in case of error, but this is subject to change. timeout contains
+// a timeout in milliseconds.
+//
+// This function retrieves bytes frames (e.g. ADPU) sent by the initiator to the
+// NFC device (configured as target).
+//
+// If timeout equals to 0, the function blocks indefinitely (until an error is
+// raised or function is completed). If timeout equals to -1, the default
+// timeout will be used.
+func (d *Device) TargetReceiveBytes(rx []byte, timeout int) (n int, err error) {
+	if d.d == nil {
+		return ESOFT, errors.New("device closed")
+	}
+
+	n = int(C.nfc_target_receive_bytes(
+		d.d,
+		(*C.uint8_t)(&rx[0]), C.size_t(len(rx)),
+		C.int(timeout),
+	))
+
+	if n < 0 {
+		err = Error(n)
+	}
+
+	return
+}
+
+// Send raw bit-frames. Returns sent bits count on success, n contains the sent
+// bit count on success, or is meaningless on error. The current implementation
+// will return the libnfc error code in case of error, but this is subject to
+// change. txPar has to have the same length as tx, an error will occur if this
+// invariant does not hold.
+//
+// tx contains a byte slice of the frame that needs to be transmitted. txLength
+// contains its length in bits. txPar contains a byte slice of the corresponding
+// parity bits needed to send per byte.
+//
+// his function can be used to transmit (raw) bit-frames to the initiator using
+// the specified NFC device (configured as target).
+func (d *Device) TargetSendBits(tx []byte, txPar []byte, txLength uint) (n int, err error) {
+	if d.d == nil {
+		return ESOFT, errors.New("device closed")
+	}
+
+	if len(tx) != len(txPar) {
+		return ESOFT, errors.New("Invariant doesn't hold")
+	}
+
+	if uint(len(tx))*8 < txLength {
+		return ESOFT, errors.New("Slice shorter than specified bit count")
+	}
+
+	n = int(C.nfc_target_send_bits(
+		d.d,
+		(*C.uint8_t)(&tx[0]),
+		C.size_t(txLength),
+		(*C.uint8_t)(&txPar[0]),
+	))
+
+	if n < 0 {
+		err = Error(n)
+	}
+
+	return
+}
+
+// Receive bit-frames. Returns received bits count on success, n contains the
+// received bit count on success, or is meaningless on error. The current
+// implementation will return the libnfc error code in case of error, but this
+// is subject to change. rxPar has to have the same length as rx, an error will
+// occur if this invariant does not hold.
+//
+// rx contains a byte slice of the frame that you want to receive. rxLength
+// contains its length in bits. rxPar contains a byte slice of the corresponding
+// parity bits received per byte.
+//
+// This function makes it possible to receive (raw) bit-frames. It returns all
+// the messages that are stored in the FIFO buffer of the PN53x chip. It
+// does not require to send any frame and thereby could be used to snoop frames
+// that are transmitted by a nearby initiator. Check out the
+// ACCEPT_MULTIPLE_FRAMES configuration option to avoid losing transmitted
+// frames.
+func (d *Device) TargetTransceiveBits(rx []byte, rxPar []byte, rxLength uint) (n int, err error) {
+	if d.d == nil {
+		return ESOFT, errors.New("device closed")
+	}
+
+	if len(rx) != len(rxPar) {
+		return ESOFT, errors.New("Invariant doesn't hold")
+	}
+
+	if uint(len(rx))*8 < rxLength {
+		return ESOFT, errors.New("Slice shorter than specified bit count")
+	}
+
+	n = int(C.nfc_target_receive_bits(
+		d.d,
+		(*C.uint8_t)(&rx[0]),
+		C.size_t(rxLength),
+		(*C.uint8_t)(&rxPar[0]),
+	))
+
+	if n < 0 {
+		err = Error(n)
+	}
+
+	return
 }

@@ -128,7 +128,7 @@ func (d *Device) InitiatorTransceiveBytes(tx, rx []byte, timeout int) (n int, er
 // useful for testing purposes. Some protocols (e.g. MIFARE Classic) require to
 // violate the ISO14443-A standard by sending incorrect parity and CRC bytes.
 // Using this feature you are able to simulate these frames.
-func (d *Device) InitiatorTransceiveBits(tx, txPar []byte, txLength int, rx, rxPar []byte) (n int, err error) {
+func (d *Device) InitiatorTransceiveBits(tx, txPar []byte, txLength uint, rx, rxPar []byte) (n int, err error) {
 	if d.d == nil {
 		return ESOFT, errors.New("Device closed")
 	}
@@ -137,7 +137,7 @@ func (d *Device) InitiatorTransceiveBits(tx, txPar []byte, txLength int, rx, rxP
 		return ESOFT, errors.New("Invariant doesn't hold")
 	}
 
-	if len(tx) < 8*txLength {
+	if uint(len(tx))*8 < txLength {
 		return ESOFT, errors.New("Slice shorter than specified bit count")
 	}
 
@@ -236,7 +236,7 @@ func (d *Device) InitiatorTransceiveBytesTimed(tx, rx []byte, cycles uint32) (n 
 // Warning: The configuration option EASY_FRAMING must be set to false; the
 // configuration option HANDLE_CRC must be set to false; the configuration
 // option HANDLE_PARITY must be set to true (the default value).
-func (d *Device) InitiatorTransceiveBitsTimed(tx, txPar []byte, txLength int, rx, rxPar []byte, cycles uint32) (n int, c uint32, err error) {
+func (d *Device) InitiatorTransceiveBitsTimed(tx, txPar []byte, txLength uint, rx, rxPar []byte, cycles uint32) (n int, c uint32, err error) {
 	if d.d == nil {
 		return ESOFT, 0, errors.New("Device closed")
 	}
@@ -245,7 +245,7 @@ func (d *Device) InitiatorTransceiveBitsTimed(tx, txPar []byte, txLength int, rx
 		return ESOFT, 0, errors.New("Invariant doesn't hold")
 	}
 
-	if len(tx) < 8*txLength {
+	if uint(len(tx))*8 < txLength {
 		return ESOFT, 0, errors.New("Slice shorter than specified bit count")
 	}
 
