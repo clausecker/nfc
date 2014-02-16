@@ -1,3 +1,24 @@
-This is a Go API for the libopenkey. You can find the libopenkey at
+This is a Go wrapper for the libnfc. It has been written against version 1.7.0.
+The code is untested and should not be used in production code without further
+testing.
 
-    https://github.com/henryk/libopenkey
+The current release of this wrapper is release 0.1. Successive releases will be
+placed in different subfolders as to not change the semantics of code that links
+against a specific version of this wrapper. The general folder structure is
+
+    github.com/fuzxxl/nfc/<version>/nfc
+
+The following versions are special:
+
+* latest always points to the latest version
+* dev is the version that is currently written on.
+
+Copyright (c) 2014, Robert Clausecker <fuzxxl@gmail.com>
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Lesser General Public License as published by the Free
+Software Foundation, version 3.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU General Public License for more details.
