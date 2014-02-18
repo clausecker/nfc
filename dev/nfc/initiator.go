@@ -72,7 +72,7 @@ import "unsafe"
 // timeout will be used.
 func (d *Device) InitiatorTransceiveBytes(tx, rx []byte, timeout int) (n int, err error) {
 	if d.d == nil {
-		return ESOFT, errors.New("Device closed")
+		return ESOFT, errors.New("device closed")
 	}
 
 	txptr := (*C.uint8_t)(&tx[0])
@@ -130,7 +130,7 @@ func (d *Device) InitiatorTransceiveBytes(tx, rx []byte, timeout int) (n int, er
 // Using this feature you are able to simulate these frames.
 func (d *Device) InitiatorTransceiveBits(tx, txPar []byte, txLength uint, rx, rxPar []byte) (n int, err error) {
 	if d.d == nil {
-		return ESOFT, errors.New("Device closed")
+		return ESOFT, errors.New("device closed")
 	}
 
 	if len(tx) != len(txPar) || len(rx) != len(rxPar) {
@@ -185,7 +185,7 @@ func (d *Device) InitiatorTransceiveBits(tx, txPar []byte, txLength uint, rx, rx
 // configuration option HANDLE_PARITY must be set to true (default value).
 func (d *Device) InitiatorTransceiveBytesTimed(tx, rx []byte, cycles uint32) (n int, c uint32, err error) {
 	if d.d == nil {
-		return ESOFT, 0, errors.New("Device closed")
+		return ESOFT, 0, errors.New("device closed")
 	}
 
 	var cptr *C.uint32_t
@@ -238,7 +238,7 @@ func (d *Device) InitiatorTransceiveBytesTimed(tx, rx []byte, cycles uint32) (n 
 // option HANDLE_PARITY must be set to true (the default value).
 func (d *Device) InitiatorTransceiveBitsTimed(tx, txPar []byte, txLength uint, rx, rxPar []byte, cycles uint32) (n int, c uint32, err error) {
 	if d.d == nil {
-		return ESOFT, 0, errors.New("Device closed")
+		return ESOFT, 0, errors.New("device closed")
 	}
 
 	if len(tx) != len(txPar) || len(rx) != len(rxPar) {
@@ -278,14 +278,13 @@ func (d *Device) InitiatorTransceiveBitsTimed(tx, txPar []byte, txLength uint, r
 // one or more commands will be sent to the target.
 func (d *Device) InitiatorTargetIsPresent(t Target) error {
 	if d.d == nil {
-		return errors.New("Device closed")
+		return errors.New("device closed")
 	}
 
 	ctarget := (*C.nfc_target)(unsafe.Pointer(t.Marshall()))
 	defer C.free(unsafe.Pointer(ctarget))
 
 	n := C.nfc_initiator_target_is_present(d.d, ctarget)
-
 	if n != 0 {
 		return Error(n)
 	}
@@ -310,10 +309,15 @@ func (d *Device) InitiatorTargetIsPresent(t Target) error {
 //  * RF field is shortly dropped (if it was enabled) then activated again
 func (d *Device) InitiatorInit() error {
 	if d.d == nil {
-		return errors.New("Device closed")
+		return errors.New("device closed")
 	}
 
-	return Error(C.nfc_initiator_init(d.d))
+	n := C.nfc_initiator_init(d.d)
+	if n != 0 {
+		return Error(n)
+	}
+
+	return nil
 }
 
 // Initialize NFC device as initiator with its secure element initiator
@@ -321,7 +325,7 @@ func (d *Device) InitiatorInit() error {
 // element. The RF field is deactivated in order to save power.
 func (d *Device) InitiatorInitSecureElement() error {
 	if d.d == nil {
-		return errors.New("Device closed")
+		return errors.New("device closed")
 	}
 
 	return Error(C.nfc_initiator_init_secure_element(d.d))
@@ -330,19 +334,22 @@ func (d *Device) InitiatorInitSecureElement() error {
 // Select a passive or emulated tag.
 func (d *Device) InitiatorSelectPassiveTarget(m Modulation, initData []byte) (Target, error) {
 	if d.d == nil {
-		return nil, errors.New("Device closed")
+		return nil, errors.New("device closed")
 	}
 
 	var pnt C.nfc_target
 
-	err := Error(C.nfc_initiator_select_passive_target(
+	n := C.nfc_initiator_select_passive_target(
 		d.d,
 		C.nfc_modulation{C.nfc_modulation_type(m.Type), C.nfc_baud_rate(m.BaudRate)},
 		(*C.uint8_t)(&initData[0]),
 		C.size_t(len(initData)),
-		&pnt))
+		&pnt)
+	if n != 0 {
+		return nil, Error(n)
+	}
 
-	return unmarshallTarget(&pnt), err
+	return unmarshallTarget(&pnt), nil
 }
 
 // List passive or emulated tags. The NFC device will try to find the available
@@ -352,6 +359,10 @@ func (d *Device) InitiatorSelectPassiveTarget(m Modulation, initData []byte) (Ta
 // of tag it is dealing with, therefore the initial modulation and speed (106,
 // 212 or 424 kbps) should be supplied.
 func (d *Device) InitiatorListPassiveTargets(m Modulation) ([]Target, error) {
+	if d.d == nil {
+		return nil, errors.New("device closed")
+	}
+
 	mod := C.nfc_modulation{
 		nmt: C.nfc_modulation_type(m.Type),
 		nbr: C.nfc_baud_rate(m.BaudRate),
@@ -371,4 +382,24 @@ func (d *Device) InitiatorListPassiveTargets(m Modulation) ([]Target, error) {
 	}
 
 	return targets, nil
+}
+
+// Deselect a selected passive or emulated tag. After selecting and
+// communicating with a passive tag, this function could be used to deactivate
+// and release the tag. This is very useful when there are multiple tags
+// available in the field. It is possible to use the
+// InitiatorSelectPassiveTarget() method to select the first available tag, test
+// it for the available features and support, deselect it and skip to the next
+// tag until the correct tag is found.
+func (d *Device) InitiatorDeselectTarget() error {
+	if d.d == nil {
+		return errors.New("device closed")
+	}
+
+	n := C.nfc_initiator_deselect_target(d.d)
+	if n != 0 {
+		return Error(n)
+	}
+
+	return nil
 }

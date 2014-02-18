@@ -39,7 +39,6 @@ func (c *context) open(conn string) (d *Device, err error) {
 	}
 
 	d = &Device{dev}
-	err = d.lastError()
 	return
 }
 
@@ -60,7 +59,7 @@ func Open(conn string) (*Device, error) {
 // result. This wraps nfc_device_get_last_error.
 func (d *Device) LastError() error {
 	if d.d == nil {
-		return errors.New("Device closed")
+		return errors.New("device closed")
 	}
 
 	err := Error(C.nfc_device_get_last_error(d.d))
@@ -91,7 +90,7 @@ func (d *Device) Close() error {
 // command.
 func (d *Device) AbortCommand() error {
 	if d.d == nil {
-		return errors.New("Device closed")
+		return errors.New("device closed")
 	}
 
 	return Error(C.nfc_abort_command(d.d))
@@ -103,7 +102,7 @@ func (d *Device) AbortCommand() error {
 // device is set to low power mode (if avaible).
 func (d *Device) Idle() error {
 	if d.d == nil {
-		return errors.New("Device closed")
+		return errors.New("device closed")
 	}
 
 	return Error(C.nfc_idle(d.d))
@@ -112,7 +111,7 @@ func (d *Device) Idle() error {
 // Print information about an NFC device.
 func (d *Device) Information() (string, error) {
 	if d.d == nil {
-		return "", errors.New("Device closed")
+		return "", errors.New("device closed")
 	}
 
 	var ptr *C.char
@@ -166,7 +165,7 @@ func (d *Device) GoString() string {
 // error. See integer constants in this package for possible properties.
 func (d *Device) SetPropertyInt(property, value int) error {
 	if d.d == nil {
-		return errors.New("Device closed")
+		return errors.New("device closed")
 	}
 
 	err := C.nfc_device_set_property_int(d.d, C.nfc_property(property), C.int(value))
@@ -182,7 +181,7 @@ func (d *Device) SetPropertyInt(property, value int) error {
 // error. See integer constants in this package for possible properties.
 func (d *Device) SetPropertyBool(property int, value bool) error {
 	if d.d == nil {
-		return errors.New("Device closed")
+		return errors.New("device closed")
 	}
 
 	err := C.nfc_device_set_property_bool(d.d, C.nfc_property(property), C.bool(value))
@@ -199,7 +198,7 @@ func (d *Device) SetPropertyBool(property int, value bool) error {
 // nfc_device_get_supported_modulation()
 func (d *Device) SupportedModulations(mode int) ([]int, error) {
 	if d.d == nil {
-		return nil, errors.New("Device closed")
+		return nil, errors.New("device closed")
 	}
 
 	// The documentation inside the libnfc is a bit unclear on how the
@@ -228,7 +227,7 @@ func (d *Device) SupportedModulations(mode int) ([]int, error) {
 // error. This function wraps nfc_device_get_supported_baud_rate().
 func (d *Device) SupportedBaudRates(modulationType int) ([]int, error) {
 	if d.d == nil {
-		return nil, errors.New("Device closed")
+		return nil, errors.New("device closed")
 	}
 
 	// The documentation inside the libnfc is a bit unclear on how the
