@@ -58,7 +58,7 @@ func Open(conn string) (*Device, error) {
 // the error returned by the last operation on d. Every function that wraps some
 // functions operating on an nfc_device should call this function and return the
 // result. This wraps nfc_device_get_last_error.
-func (d *Device) lastError() error {
+func (d *Device) LastError() error {
 	if d.d == nil {
 		return errors.New("Device closed")
 	}
