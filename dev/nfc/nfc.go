@@ -1,6 +1,23 @@
+// Copyright (c) 2014, Robert Clausecker <fuzxxl@gmail.com>
+//
+// This program is free software: you can redistribute it and/or modify it
+// under the terms of the GNU Lesser General Public License as published by the
+// Free Software Foundation, version 3.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+// more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>
+
 // This package wraps the libnfc to provide an API for Go. Most documentation
 // was taken unchanged from the documentation inside the libnfc. Some functions
 // and names have been altered to fit the conventions and idioms used in Go.
+//
+// This package is licensed under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation, version 3.
 package nfc
 
 import "fmt"
