@@ -1,0 +1,9 @@
+Release 0.1 (2014-02-16):
+ * initial release
+
+Release 0.2 (2014-03-03):
+ * Add a function nfc.(*Device).LastError()
+ * Add a function nfc.(*Device).InitiatorDeselectTarget()
+ * Fix incorrect handling in a couple of places
+ * Improve and unify error strings
+ * Fix issue #2
