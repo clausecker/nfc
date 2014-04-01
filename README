@@ -11,7 +11,7 @@ against a specific version of this wrapper. The general folder structure is
 The following versions are special:
 
 * latest always points to the latest version
-* dev is the version that is currently written on.
+* dev is the version that is currently under development
 
 Copyright (c) 2014, Robert Clausecker <fuzxxl@gmail.com>
 
