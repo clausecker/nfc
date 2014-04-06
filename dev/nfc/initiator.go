@@ -84,7 +84,7 @@ import "unsafe"
 // If timeout equals to 0, the function blocks indefinitely (until an error is
 // raised or function is completed). If timeout equals to -1, the default
 // timeout will be used.
-func (d *Device) InitiatorTransceiveBytes(tx, rx []byte, timeout int) (n int, err error) {
+func (d Device) InitiatorTransceiveBytes(tx, rx []byte, timeout int) (n int, err error) {
 	if *d.d == nil {
 		return ESOFT, errors.New("device closed")
 	}
@@ -118,7 +118,7 @@ func (d *Device) InitiatorTransceiveBytes(tx, rx []byte, timeout int) (n int, er
 //
 // For example the REQA (0x26) command (the first anti-collision command of
 // ISO14443-A) must be precise 7 bits long. This is not possible using
-// (*Device).InitiatorTransceiveBytes(). With that function you can only
+// Device.InitiatorTransceiveBytes(). With that function you can only
 // communicate frames that consist of full bytes. When you send a full byte (8
 // bits + 1 parity) with the value of REQA (0x26), a tag will simply not
 // respond.
@@ -130,7 +130,7 @@ func (d *Device) InitiatorTransceiveBytes(tx, rx []byte, timeout int) (n int, er
 // command, you have to supply the following parity bytes (0x01, 0x00) to define
 // the correct odd parity bits. This is only an example to explain how it works,
 // if you just are sending two bytes with ISO14443-A compliant parity bits you
-// better can use the (*Device).InitiatorTransceiveBytes() method.
+// better can use the Device.InitiatorTransceiveBytes() method.
 //
 // rx will contain the response from the target. This function will return
 // EOVFLOW if more bytes are received than the length of rx. rxPar contains a
@@ -142,7 +142,7 @@ func (d *Device) InitiatorTransceiveBytes(tx, rx []byte, timeout int) (n int, er
 // useful for testing purposes. Some protocols (e.g. MIFARE Classic) require to
 // violate the ISO14443-A standard by sending incorrect parity and CRC bytes.
 // Using this feature you are able to simulate these frames.
-func (d *Device) InitiatorTransceiveBits(tx, txPar []byte, txLength uint, rx, rxPar []byte) (n int, err error) {
+func (d Device) InitiatorTransceiveBits(tx, txPar []byte, txLength uint, rx, rxPar []byte) (n int, err error) {
 	if *d.d == nil {
 		return ESOFT, errors.New("device closed")
 	}
@@ -180,7 +180,7 @@ func (d *Device) InitiatorTransceiveBits(tx, txPar []byte, txLength uint, rx, rx
 // change. This function will return EOVFLOW if more bytes are being received
 // than the length of rx.
 //
-// This function is similar to (*Device).InitiatorTransceiveBytes() with the
+// This function is similar to Device.InitiatorTransceiveBytes() with the
 // following differences:
 //
 //  - A precise cycles counter will indicate the number of cycles between emission & reception of frames.
@@ -197,7 +197,7 @@ func (d *Device) InitiatorTransceiveBits(tx, txPar []byte, txLength uint, rx, rx
 //
 // Warning: The configuration option EASY_FRAMING must be set to false; the
 // configuration option HANDLE_PARITY must be set to true (default value).
-func (d *Device) InitiatorTransceiveBytesTimed(tx, rx []byte, cycles uint32) (n int, c uint32, err error) {
+func (d Device) InitiatorTransceiveBytesTimed(tx, rx []byte, cycles uint32) (n int, c uint32, err error) {
 	if *d.d == nil {
 		return ESOFT, 0, errors.New("device closed")
 	}
@@ -232,7 +232,7 @@ func (d *Device) InitiatorTransceiveBytesTimed(tx, rx []byte, cycles uint32) (n 
 // tx, dito for rxPar and rx. An error will occur if any of these invariants do
 // not hold.
 //
-// This function is similar to (*Device).InitiatorTransceiveBits() with the
+// This function is similar to Device.InitiatorTransceiveBits() with the
 // following differences:
 //
 //  - A precise cycles counter will indicate the number of cycles between emission & reception of frames.
@@ -250,7 +250,7 @@ func (d *Device) InitiatorTransceiveBytesTimed(tx, rx []byte, cycles uint32) (n 
 // Warning: The configuration option EASY_FRAMING must be set to false; the
 // configuration option HANDLE_CRC must be set to false; the configuration
 // option HANDLE_PARITY must be set to true (the default value).
-func (d *Device) InitiatorTransceiveBitsTimed(tx, txPar []byte, txLength uint, rx, rxPar []byte, cycles uint32) (n int, c uint32, err error) {
+func (d Device) InitiatorTransceiveBitsTimed(tx, txPar []byte, txLength uint, rx, rxPar []byte, cycles uint32) (n int, c uint32, err error) {
 	if *d.d == nil {
 		return ESOFT, 0, errors.New("device closed")
 	}
@@ -290,7 +290,7 @@ func (d *Device) InitiatorTransceiveBitsTimed(tx, txPar []byte, txLength uint, r
 // Check target presence. Returns nil on success, an error otherwise. The
 // target has to be selected before you can check its presence. To run the test,
 // one or more commands will be sent to the target.
-func (d *Device) InitiatorTargetIsPresent(t Target) error {
+func (d Device) InitiatorTargetIsPresent(t Target) error {
 	if *d.d == nil {
 		return errors.New("device closed")
 	}
@@ -321,7 +321,7 @@ func (d *Device) InitiatorTargetIsPresent(t Target) error {
 //  * speed is set to 106 kbps (NP_FORCE_SPEED_106 = true)
 //  * Let the device try forever to find a target (NP_INFINITE_SELECT = true)
 //  * RF field is shortly dropped (if it was enabled) then activated again
-func (d *Device) InitiatorInit() error {
+func (d Device) InitiatorInit() error {
 	if *d.d == nil {
 		return errors.New("device closed")
 	}
@@ -337,7 +337,7 @@ func (d *Device) InitiatorInit() error {
 // Initialize NFC device as initiator with its secure element initiator
 // (reader). After initialization it can be used to communicate with the secure
 // element. The RF field is deactivated in order to save power.
-func (d *Device) InitiatorInitSecureElement() error {
+func (d Device) InitiatorInitSecureElement() error {
 	if *d.d == nil {
 		return errors.New("device closed")
 	}
@@ -346,7 +346,7 @@ func (d *Device) InitiatorInitSecureElement() error {
 }
 
 // Select a passive or emulated tag.
-func (d *Device) InitiatorSelectPassiveTarget(m Modulation, initData []byte) (Target, error) {
+func (d Device) InitiatorSelectPassiveTarget(m Modulation, initData []byte) (Target, error) {
 	if *d.d == nil {
 		return nil, errors.New("device closed")
 	}
@@ -372,7 +372,7 @@ func (d *Device) InitiatorSelectPassiveTarget(m Modulation, initData []byte) (Ta
 // for reader to passive communications. The chip needs to know with what kind
 // of tag it is dealing with, therefore the initial modulation and speed (106,
 // 212 or 424 kbps) should be supplied.
-func (d *Device) InitiatorListPassiveTargets(m Modulation) ([]Target, error) {
+func (d Device) InitiatorListPassiveTargets(m Modulation) ([]Target, error) {
 	if *d.d == nil {
 		return nil, errors.New("device closed")
 	}
@@ -405,7 +405,7 @@ func (d *Device) InitiatorListPassiveTargets(m Modulation) ([]Target, error) {
 // InitiatorSelectPassiveTarget() method to select the first available tag, test
 // it for the available features and support, deselect it and skip to the next
 // tag until the correct tag is found.
-func (d *Device) InitiatorDeselectTarget() error {
+func (d Device) InitiatorDeselectTarget() error {
 	if *d.d == nil {
 		return errors.New("device closed")
 	}
