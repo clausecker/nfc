@@ -21,15 +21,15 @@ import "unsafe"
 import "errors"
 import "fmt"
 
-// NFC device. Copying these structs may cause unintended side effects.
+// NFC device
 type Device struct {
-	d *C.nfc_device
+	d **C.nfc_device
 }
 
 // Return a pointer to the wrapped nfc_device. This is useful if you try to use
 // this wrapper to wrap other C code that builds onto the libnfc.
 func (d *Device) Pointer() uintptr {
-	return uintptr(unsafe.Pointer(d.d))
+	return uintptr(unsafe.Pointer(*d.d))
 }
 
 // Open an NFC device. See documentation of Open() for more details
@@ -52,7 +52,7 @@ func (c *context) open(conn string) (d *Device, err error) {
 		return
 	}
 
-	d = &Device{dev}
+	d = &Device{&dev}
 	return
 }
 
@@ -72,11 +72,11 @@ func Open(conn string) (*Device, error) {
 // functions operating on an nfc_device should call this function and return the
 // result. This wraps nfc_device_get_last_error.
 func (d *Device) LastError() error {
-	if d.d == nil {
+	if *d.d == nil {
 		return errors.New("device closed")
 	}
 
-	err := Error(C.nfc_device_get_last_error(d.d))
+	err := Error(C.nfc_device_get_last_error(*d.d))
 
 	if err == 0 {
 		return nil
@@ -87,13 +87,13 @@ func (d *Device) LastError() error {
 
 // Close an NFC device.
 func (d *Device) Close() error {
-	if d.d == nil {
+	if *d.d == nil {
 		// closing a closed device is a nop
 		return nil
 	}
 
-	C.nfc_close(d.d)
-	d.d = nil
+	*d.d = nil
+	C.nfc_close(*d.d)
 
 	return nil
 }
@@ -103,11 +103,11 @@ func (d *Device) Close() error {
 // initiator request). This function attempt to abort the current running
 // command.
 func (d *Device) AbortCommand() error {
-	if d.d == nil {
+	if *d.d == nil {
 		return errors.New("device closed")
 	}
 
-	return Error(C.nfc_abort_command(d.d))
+	return Error(C.nfc_abort_command(*d.d))
 }
 
 // Turn NFC device in idle mode. In initiator mode, the RF field is turned off
@@ -115,21 +115,21 @@ func (d *Device) AbortCommand() error {
 // emulation is stoped (no target available from external initiator) and the
 // device is set to low power mode (if avaible).
 func (d *Device) Idle() error {
-	if d.d == nil {
+	if *d.d == nil {
 		return errors.New("device closed")
 	}
 
-	return Error(C.nfc_idle(d.d))
+	return Error(C.nfc_idle(*d.d))
 }
 
 // Print information about an NFC device.
 func (d *Device) Information() (string, error) {
-	if d.d == nil {
+	if *d.d == nil {
 		return "", errors.New("device closed")
 	}
 
 	var ptr *C.char
-	buflen := C.nfc_device_get_information_about(d.d, &ptr)
+	buflen := C.nfc_device_get_information_about(*d.d, &ptr)
 
 	if buflen < 0 {
 		return "", Error(buflen)
@@ -147,28 +147,28 @@ func (d *Device) Information() (string, error) {
 // Returns the device's connection string. If the device has been closed before,
 // this function returns the empty string.
 func (d *Device) Connection() string {
-	if d.d == nil {
+	if *d.d == nil {
 		return ""
 	}
 
-	cptr := C.nfc_device_get_connstring(d.d)
+	cptr := C.nfc_device_get_connstring(*d.d)
 	return C.GoString(cptr)
 }
 
 // Returns the device's name. This information is not enough to uniquely
 // determine the device.
 func (d *Device) String() string {
-	if d.d == nil {
+	if *d.d == nil {
 		return ""
 	}
 
-	cptr := C.nfc_device_get_name(d.d)
+	cptr := C.nfc_device_get_name(*d.d)
 	return C.GoString(cptr)
 }
 
 // Return Go code that could be used to reproduce this device.
 func (d *Device) GoString() string {
-	if d.d == nil {
+	if *d.d == nil {
 		return "nil"
 	}
 
@@ -178,11 +178,11 @@ func (d *Device) GoString() string {
 // Set a device's integer-property value. Returns nil on success, otherwise an
 // error. See integer constants in this package for possible properties.
 func (d *Device) SetPropertyInt(property, value int) error {
-	if d.d == nil {
+	if *d.d == nil {
 		return errors.New("device closed")
 	}
 
-	err := C.nfc_device_set_property_int(d.d, C.nfc_property(property), C.int(value))
+	err := C.nfc_device_set_property_int(*d.d, C.nfc_property(property), C.int(value))
 
 	if err != 0 {
 		return Error(err)
@@ -194,11 +194,11 @@ func (d *Device) SetPropertyInt(property, value int) error {
 // Set a device's boolean-property value. Returns nil on success, otherwise an
 // error. See integer constants in this package for possible properties.
 func (d *Device) SetPropertyBool(property int, value bool) error {
-	if d.d == nil {
+	if *d.d == nil {
 		return errors.New("device closed")
 	}
 
-	err := C.nfc_device_set_property_bool(d.d, C.nfc_property(property), C.bool(value))
+	err := C.nfc_device_set_property_bool(*d.d, C.nfc_property(property), C.bool(value))
 
 	if err != 0 {
 		return Error(err)
@@ -211,7 +211,7 @@ func (d *Device) SetPropertyBool(property int, value bool) error {
 // error. Pass either TARGET or INITIATOR as mode. This function wraps
 // nfc_device_get_supported_modulation()
 func (d *Device) SupportedModulations(mode int) ([]int, error) {
-	if d.d == nil {
+	if *d.d == nil {
 		return nil, errors.New("device closed")
 	}
 
@@ -220,7 +220,7 @@ func (d *Device) SupportedModulations(mode int) ([]int, error) {
 	// itself suggest that it points to an array of entries terminated with
 	// UNDEFINED = 0.
 	var mt_arr *C.nfc_modulation_type
-	ret := C.nfc_device_get_supported_modulation(d.d, C.nfc_mode(mode), &mt_arr)
+	ret := C.nfc_device_get_supported_modulation(*d.d, C.nfc_mode(mode), &mt_arr)
 	if ret != 0 {
 		return nil, Error(ret)
 	}
@@ -240,7 +240,7 @@ func (d *Device) SupportedModulations(mode int) ([]int, error) {
 // Get suported baud rates. Returns either a slice of supported baud rates or an
 // error. This function wraps nfc_device_get_supported_baud_rate().
 func (d *Device) SupportedBaudRates(modulationType int) ([]int, error) {
-	if d.d == nil {
+	if *d.d == nil {
 		return nil, errors.New("device closed")
 	}
 
@@ -250,7 +250,7 @@ func (d *Device) SupportedBaudRates(modulationType int) ([]int, error) {
 	// UNDEFINED = 0.
 	var br_arr *C.nfc_baud_rate
 	ret := C.nfc_device_get_supported_baud_rate(
-		d.d,
+		*d.d,
 		C.nfc_modulation_type(modulationType),
 		&br_arr,
 	)
@@ -298,7 +298,7 @@ func (d *Device) SupportedBaudRates(modulationType int) ([]int, error) {
 // raised or function is completed). If timeout equals to -1, the default
 // timeout will be used.
 func (d *Device) TargetInit(t Target, rx []byte, timeout int) (n int, tt Target, err error) {
-	if d.d == nil {
+	if *d.d == nil {
 		return ESOFT, t, errors.New("device closed")
 	}
 
@@ -306,7 +306,7 @@ func (d *Device) TargetInit(t Target, rx []byte, timeout int) (n int, tt Target,
 	defer C.free(unsafe.Pointer(tar))
 
 	n = int(C.nfc_target_init(
-		d.d, tar,
+		*d.d, tar,
 		(*C.uint8_t)(&rx[0]), C.size_t(len(rx)),
 		C.int(timeout),
 	))
@@ -331,12 +331,12 @@ func (d *Device) TargetInit(t Target, rx []byte, timeout int) (n int, tt Target,
 // raised or function is completed). If timeout equals to -1, the default
 // timeout will be used.
 func (d *Device) TargetSendBytes(tx []byte, timeout int) (n int, err error) {
-	if d.d == nil {
+	if *d.d == nil {
 		return ESOFT, errors.New("device closed")
 	}
 
 	n = int(C.nfc_target_send_bytes(
-		d.d,
+		*d.d,
 		(*C.uint8_t)(&tx[0]), C.size_t(len(tx)),
 		C.int(timeout),
 	))
@@ -360,12 +360,12 @@ func (d *Device) TargetSendBytes(tx []byte, timeout int) (n int, err error) {
 // raised or function is completed). If timeout equals to -1, the default
 // timeout will be used.
 func (d *Device) TargetReceiveBytes(rx []byte, timeout int) (n int, err error) {
-	if d.d == nil {
+	if *d.d == nil {
 		return ESOFT, errors.New("device closed")
 	}
 
 	n = int(C.nfc_target_receive_bytes(
-		d.d,
+		*d.d,
 		(*C.uint8_t)(&rx[0]), C.size_t(len(rx)),
 		C.int(timeout),
 	))
@@ -390,7 +390,7 @@ func (d *Device) TargetReceiveBytes(rx []byte, timeout int) (n int, err error) {
 // his function can be used to transmit (raw) bit-frames to the initiator using
 // the specified NFC device (configured as target).
 func (d *Device) TargetSendBits(tx []byte, txPar []byte, txLength uint) (n int, err error) {
-	if d.d == nil {
+	if *d.d == nil {
 		return ESOFT, errors.New("device closed")
 	}
 
@@ -403,7 +403,7 @@ func (d *Device) TargetSendBits(tx []byte, txPar []byte, txLength uint) (n int, 
 	}
 
 	n = int(C.nfc_target_send_bits(
-		d.d,
+		*d.d,
 		(*C.uint8_t)(&tx[0]),
 		C.size_t(txLength),
 		(*C.uint8_t)(&txPar[0]),
@@ -433,7 +433,7 @@ func (d *Device) TargetSendBits(tx []byte, txPar []byte, txLength uint) (n int, 
 // ACCEPT_MULTIPLE_FRAMES configuration option to avoid losing transmitted
 // frames.
 func (d *Device) TargetTransceiveBits(rx []byte, rxPar []byte, rxLength uint) (n int, err error) {
-	if d.d == nil {
+	if *d.d == nil {
 		return ESOFT, errors.New("device closed")
 	}
 
@@ -446,7 +446,7 @@ func (d *Device) TargetTransceiveBits(rx []byte, rxPar []byte, rxLength uint) (n
 	}
 
 	n = int(C.nfc_target_receive_bits(
-		d.d,
+		*d.d,
 		(*C.uint8_t)(&rx[0]),
 		C.size_t(rxLength),
 		(*C.uint8_t)(&rxPar[0]),

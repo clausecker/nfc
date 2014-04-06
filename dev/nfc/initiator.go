@@ -85,7 +85,7 @@ import "unsafe"
 // raised or function is completed). If timeout equals to -1, the default
 // timeout will be used.
 func (d *Device) InitiatorTransceiveBytes(tx, rx []byte, timeout int) (n int, err error) {
-	if d.d == nil {
+	if *d.d == nil {
 		return ESOFT, errors.New("device closed")
 	}
 
@@ -93,7 +93,7 @@ func (d *Device) InitiatorTransceiveBytes(tx, rx []byte, timeout int) (n int, er
 	rxptr := (*C.uint8_t)(&rx[0])
 
 	n = int(C.nfc_initiator_transceive_bytes(
-		d.d,
+		*d.d,
 		txptr, C.size_t(len(tx)),
 		rxptr, C.size_t(len(rx)),
 		C.int(timeout),
@@ -143,7 +143,7 @@ func (d *Device) InitiatorTransceiveBytes(tx, rx []byte, timeout int) (n int, er
 // violate the ISO14443-A standard by sending incorrect parity and CRC bytes.
 // Using this feature you are able to simulate these frames.
 func (d *Device) InitiatorTransceiveBits(tx, txPar []byte, txLength uint, rx, rxPar []byte) (n int, err error) {
-	if d.d == nil {
+	if *d.d == nil {
 		return ESOFT, errors.New("device closed")
 	}
 
@@ -161,7 +161,7 @@ func (d *Device) InitiatorTransceiveBits(tx, txPar []byte, txLength uint, rx, rx
 	rxparptr := (*C.uint8_t)(&rxPar[0])
 
 	n = int(C.nfc_initiator_transceive_bits(
-		d.d,
+		*d.d,
 		txptr, C.size_t(txLength), txparptr,
 		rxptr, C.size_t(len(rx)), rxparptr,
 	))
@@ -198,7 +198,7 @@ func (d *Device) InitiatorTransceiveBits(tx, txPar []byte, txLength uint, rx, rx
 // Warning: The configuration option EASY_FRAMING must be set to false; the
 // configuration option HANDLE_PARITY must be set to true (default value).
 func (d *Device) InitiatorTransceiveBytesTimed(tx, rx []byte, cycles uint32) (n int, c uint32, err error) {
-	if d.d == nil {
+	if *d.d == nil {
 		return ESOFT, 0, errors.New("device closed")
 	}
 
@@ -209,7 +209,7 @@ func (d *Device) InitiatorTransceiveBytesTimed(tx, rx []byte, cycles uint32) (n 
 	rxptr := (*C.uint8_t)(&rx[0])
 
 	n = int(C.nfc_initiator_transceive_bytes_timed(
-		d.d,
+		*d.d,
 		txptr, C.size_t(len(tx)),
 		rxptr, C.size_t(len(rx)),
 		cptr,
@@ -251,7 +251,7 @@ func (d *Device) InitiatorTransceiveBytesTimed(tx, rx []byte, cycles uint32) (n 
 // configuration option HANDLE_CRC must be set to false; the configuration
 // option HANDLE_PARITY must be set to true (the default value).
 func (d *Device) InitiatorTransceiveBitsTimed(tx, txPar []byte, txLength uint, rx, rxPar []byte, cycles uint32) (n int, c uint32, err error) {
-	if d.d == nil {
+	if *d.d == nil {
 		return ESOFT, 0, errors.New("device closed")
 	}
 
@@ -272,7 +272,7 @@ func (d *Device) InitiatorTransceiveBitsTimed(tx, txPar []byte, txLength uint, r
 	rxparptr := (*C.uint8_t)(&rxPar[0])
 
 	n = int(C.nfc_initiator_transceive_bits_timed(
-		d.d,
+		*d.d,
 		txptr, C.size_t(txLength), txparptr,
 		rxptr, C.size_t(len(rx)), rxparptr,
 		cptr,
@@ -291,14 +291,14 @@ func (d *Device) InitiatorTransceiveBitsTimed(tx, txPar []byte, txLength uint, r
 // target has to be selected before you can check its presence. To run the test,
 // one or more commands will be sent to the target.
 func (d *Device) InitiatorTargetIsPresent(t Target) error {
-	if d.d == nil {
+	if *d.d == nil {
 		return errors.New("device closed")
 	}
 
 	ctarget := (*C.nfc_target)(unsafe.Pointer(t.Marshall()))
 	defer C.free(unsafe.Pointer(ctarget))
 
-	n := C.nfc_initiator_target_is_present(d.d, ctarget)
+	n := C.nfc_initiator_target_is_present(*d.d, ctarget)
 	if n != 0 {
 		return Error(n)
 	}
@@ -322,11 +322,11 @@ func (d *Device) InitiatorTargetIsPresent(t Target) error {
 //  * Let the device try forever to find a target (NP_INFINITE_SELECT = true)
 //  * RF field is shortly dropped (if it was enabled) then activated again
 func (d *Device) InitiatorInit() error {
-	if d.d == nil {
+	if *d.d == nil {
 		return errors.New("device closed")
 	}
 
-	n := C.nfc_initiator_init(d.d)
+	n := C.nfc_initiator_init(*d.d)
 	if n != 0 {
 		return Error(n)
 	}
@@ -338,23 +338,23 @@ func (d *Device) InitiatorInit() error {
 // (reader). After initialization it can be used to communicate with the secure
 // element. The RF field is deactivated in order to save power.
 func (d *Device) InitiatorInitSecureElement() error {
-	if d.d == nil {
+	if *d.d == nil {
 		return errors.New("device closed")
 	}
 
-	return Error(C.nfc_initiator_init_secure_element(d.d))
+	return Error(C.nfc_initiator_init_secure_element(*d.d))
 }
 
 // Select a passive or emulated tag.
 func (d *Device) InitiatorSelectPassiveTarget(m Modulation, initData []byte) (Target, error) {
-	if d.d == nil {
+	if *d.d == nil {
 		return nil, errors.New("device closed")
 	}
 
 	var pnt C.nfc_target
 
 	n := C.nfc_initiator_select_passive_target(
-		d.d,
+		*d.d,
 		C.nfc_modulation{C.nfc_modulation_type(m.Type), C.nfc_baud_rate(m.BaudRate)},
 		(*C.uint8_t)(&initData[0]),
 		C.size_t(len(initData)),
@@ -373,7 +373,7 @@ func (d *Device) InitiatorSelectPassiveTarget(m Modulation, initData []byte) (Ta
 // of tag it is dealing with, therefore the initial modulation and speed (106,
 // 212 or 424 kbps) should be supplied.
 func (d *Device) InitiatorListPassiveTargets(m Modulation) ([]Target, error) {
-	if d.d == nil {
+	if *d.d == nil {
 		return nil, errors.New("device closed")
 	}
 
@@ -382,7 +382,7 @@ func (d *Device) InitiatorListPassiveTargets(m Modulation) ([]Target, error) {
 		nbr: C.nfc_baud_rate(m.BaudRate),
 	}
 
-	tar := C.list_targets_wrapper(d.d, mod)
+	tar := C.list_targets_wrapper(*d.d, mod)
 	defer C.free(unsafe.Pointer(tar.entries))
 	if tar.count < 0 {
 		return nil, Error(tar.count)
@@ -406,11 +406,11 @@ func (d *Device) InitiatorListPassiveTargets(m Modulation) ([]Target, error) {
 // it for the available features and support, deselect it and skip to the next
 // tag until the correct tag is found.
 func (d *Device) InitiatorDeselectTarget() error {
-	if d.d == nil {
+	if *d.d == nil {
 		return errors.New("device closed")
 	}
 
-	n := C.nfc_initiator_deselect_target(d.d)
+	n := C.nfc_initiator_deselect_target(*d.d)
 	if n != 0 {
 		return Error(n)
 	}
