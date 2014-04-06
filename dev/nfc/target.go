@@ -97,25 +97,25 @@ func unmarshallTarget(t *C.nfc_target) Target {
 	m := Modulation{Type: int(t.nm.nmt), BaudRate: int(t.nm.nbr)}
 
 	switch m.Type {
-	case ISO14443A:
+	case ISO14443a:
 		r := unmarshallISO14443aTarget((*C.nfc_iso14443a_info)(ptr), m)
 		return &r
-	case JEWEL:
+	case Jewel:
 		r := unmarshallJewelTarget((*C.nfc_jewel_info)(ptr), m)
 		return &r
-	case ISO14443B:
+	case ISO14443b:
 		r := unmarshallISO14443bTarget((*C.nfc_iso14443b_info)(ptr), m)
 		return &r
-	case ISO14443BI:
+	case ISO14443bi:
 		r := unmarshallISO14443biTarget((*C.nfc_iso14443bi_info)(ptr), m)
 		return &r
-	case ISO14443B2SR:
+	case ISO14443b2sr:
 		r := unmarshallISO14443b2srTarget((*C.nfc_iso14443b2sr_info)(ptr), m)
 		return &r
 	case ISO14443B2CT:
 		r := unmarshallISO14443b2ctTarget((*C.nfc_iso14443b2ct_info)(ptr), m)
 		return &r
-	case FELICA:
+	case Felica:
 		r := unmarshallFelicaTarget((*C.nfc_felica_info)(ptr), m)
 		return &r
 	case DEP:
@@ -128,9 +128,9 @@ func unmarshallTarget(t *C.nfc_target) Target {
 
 // NFC D.E.P. (Data Exchange Protocol) active/passive mode
 const (
-	UNDEFINED = iota
-	PASSIVE
-	ACTIVE
+	Undefined = iota
+	Passive
+	Active
 )
 
 // NFC target information in D.E.P. (Data Exchange Protocol) see ISO/IEC 18092
@@ -214,7 +214,7 @@ func (t *ISO14443aTarget) String() string {
 
 // Type is always ISO14443A
 func (t *ISO14443aTarget) Modulation() Modulation {
-	return Modulation{ISO14443A, t.Baud}
+	return Modulation{ISO14443a, t.Baud}
 }
 
 // Make an ISO14443aTarget from an nfc_iso14443a_info
@@ -232,7 +232,7 @@ func unmarshallISO14443aTarget(c *C.nfc_iso14443a_info, m Modulation) ISO14443aT
 
 // See documentation in Target for more details.
 func (d *ISO14443aTarget) Marshall() uintptr {
-	c := (*C.nfc_iso14443a_info)(makeTarget(ISO14443A, d.Baud))
+	c := (*C.nfc_iso14443a_info)(makeTarget(ISO14443a, d.Baud))
 
 	c.abtAtqa[0] = C.uint8_t(d.Atqa[0])
 	c.abtAtqa[1] = C.uint8_t(d.Atqa[1])
@@ -267,7 +267,7 @@ func (t *FelicaTarget) String() string {
 
 // Type is always FELICA
 func (t *FelicaTarget) Modulation() Modulation {
-	return Modulation{FELICA, t.Baud}
+	return Modulation{Felica, t.Baud}
 }
 
 // Make an FelicaTarget from an nfc_felica_info
@@ -294,7 +294,7 @@ func unmarshallFelicaTarget(c *C.nfc_felica_info, m Modulation) FelicaTarget {
 
 // See documentation in Target for more details.
 func (d *FelicaTarget) Marshall() uintptr {
-	c := (*C.nfc_felica_info)(makeTarget(FELICA, d.Baud))
+	c := (*C.nfc_felica_info)(makeTarget(Felica, d.Baud))
 
 	c.szLen = C.size_t(d.Len)
 	c.btResCode = C.uint8_t(d.ResCode)
@@ -328,7 +328,7 @@ func (t *ISO14443bTarget) String() string {
 
 // Type is always ISO14443B
 func (t *ISO14443bTarget) Modulation() Modulation {
-	return Modulation{ISO14443B, t.Baud}
+	return Modulation{ISO14443b, t.Baud}
 }
 
 // Make an ISO14443bTarget from an nfc_iso14443b_info
@@ -352,7 +352,7 @@ func unmarshallISO14443bTarget(c *C.nfc_iso14443b_info, m Modulation) ISO14443bT
 
 // See documentation in Target for more details.
 func (d *ISO14443bTarget) Marshall() uintptr {
-	c := (*C.nfc_iso14443b_info)(makeTarget(ISO14443B, d.Baud))
+	c := (*C.nfc_iso14443b_info)(makeTarget(ISO14443b, d.Baud))
 
 	c.ui8CardIdentifier = C.uint8_t(d.CardIdentifier)
 
@@ -386,7 +386,7 @@ func (t *ISO14443biTarget) String() string {
 
 // Type is always ISO14443BI
 func (t *ISO14443biTarget) Modulation() Modulation {
-	return Modulation{ISO14443BI, t.Baud}
+	return Modulation{ISO14443bi, t.Baud}
 }
 
 // Make an ISO14443biTarget from an nfc_iso14443bi_info
@@ -407,7 +407,7 @@ func unmarshallISO14443biTarget(c *C.nfc_iso14443bi_info, m Modulation) ISO14443
 
 // See documentation in Target for more details.
 func (d *ISO14443biTarget) Marshall() uintptr {
-	c := (*C.nfc_iso14443bi_info)(makeTarget(ISO14443BI, d.Baud))
+	c := (*C.nfc_iso14443bi_info)(makeTarget(ISO14443bi, d.Baud))
 
 	c.btVerLog = C.uint8_t(d.VerLog)
 	c.btConfig = C.uint8_t(d.Config)
@@ -435,7 +435,7 @@ func (t *ISO14443b2srTarget) String() string {
 
 // Type is always ISO14443B2SR
 func (t *ISO14443b2srTarget) Modulation() Modulation {
-	return Modulation{ISO14443B2SR, t.Baud}
+	return Modulation{ISO14443b2sr, t.Baud}
 }
 
 // Make an ISO14443b2srTarget from an nfc_iso14443b2sr_info
@@ -451,7 +451,7 @@ func unmarshallISO14443b2srTarget(c *C.nfc_iso14443b2sr_info, m Modulation) ISO1
 
 // See documentation in Target for more details.
 func (d *ISO14443b2srTarget) Marshall() uintptr {
-	c := (*C.nfc_iso14443b2sr_info)(makeTarget(ISO14443B2SR, d.Baud))
+	c := (*C.nfc_iso14443b2sr_info)(makeTarget(ISO14443b2sr, d.Baud))
 
 	for i, b := range d.UID {
 		c.abtUID[i] = C.uint8_t(b)
@@ -519,7 +519,7 @@ func (t *JewelTarget) String() string {
 
 // Type is always JEWEL
 func (t *JewelTarget) Modulation() Modulation {
-	return Modulation{JEWEL, t.Baud}
+	return Modulation{Jewel, t.Baud}
 }
 
 // Make a JewelTarget from an nfc_jewel_info
@@ -537,7 +537,7 @@ func unmarshallJewelTarget(c *C.nfc_jewel_info, m Modulation) JewelTarget {
 }
 
 func (d *JewelTarget) Marshall() uintptr {
-	c := (*C.nfc_jewel_info)(makeTarget(JEWEL, d.Baud))
+	c := (*C.nfc_jewel_info)(makeTarget(Jewel, d.Baud))
 
 	c.btSensRes[0] = C.uint8_t(d.SensRes[0])
 	c.btSensRes[1] = C.uint8_t(d.SensRes[1])

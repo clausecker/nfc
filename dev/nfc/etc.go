@@ -118,11 +118,11 @@ func (c *context) listDevices() ([]string, error) {
 		return nil, Error(dev.count)
 	}
 
-	dev_entries := C.GoBytes(unsafe.Pointer(dev.entries), dev.count*BUFSIZE_CONNSTRING)
+	dev_entries := C.GoBytes(unsafe.Pointer(dev.entries), dev.count*BufsizeConnstring)
 
 	devices := make([]string, dev.count)
 	for i := range devices {
-		charptr := (*C.char)(unsafe.Pointer(&dev_entries[i*BUFSIZE_CONNSTRING]))
+		charptr := (*C.char)(unsafe.Pointer(&dev_entries[i*BufsizeConnstring]))
 		devices[i] = connstring{charptr}.String()
 	}
 
@@ -135,7 +135,7 @@ type connstring struct {
 }
 
 func (c connstring) String() string {
-	str := C.GoStringN(c.ptr, BUFSIZE_CONNSTRING)
+	str := C.GoStringN(c.ptr, BufsizeConnstring)
 	i := 0
 
 	for ; i < len(str) && str[i] != '\000'; i++ {
@@ -152,7 +152,7 @@ func newConnstring(s string) (connstring, error) {
 		return connstring{nil}, nil
 	}
 
-	if len(s) >= BUFSIZE_CONNSTRING {
+	if len(s) >= BufsizeConnstring {
 		return connstring{nil}, errors.New("String too long for Connstring")
 	}
 
