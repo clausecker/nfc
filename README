@@ -1,8 +1,9 @@
 This is a Go wrapper for the libnfc. It has been written against version 1.7.0.
-The code is untested and should not be used in production code without further
-testing.
+The code has not been thoroughly tested yet. Please report any errors to the
+project. The API is considered stable as of version 1.0 and will not change in
+incompatible ways in the near future.
 
-The current release of this wrapper is release 0.2. Successive releases will be
+The current release of this wrapper is release 1.0. Successive releases will be
 placed in different subfolders as to not change the semantics of code that links
 against a specific version of this wrapper. The general folder structure is
 

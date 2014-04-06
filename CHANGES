@@ -1,9 +1,25 @@
+Each item is prefixed with one of the following letters:
+
+ B bugfix
+ C compatible expansion without adding new symbols
+ I incompatible change
+ N new function, method or variable in the API
+ R general remark
+
 Release 0.1 (2014-02-16):
- * initial release
+ R initial release
 
 Release 0.2 (2014-03-03):
- * Add a function nfc.(*Device).LastError()
- * Add a function nfc.(*Device).InitiatorDeselectTarget()
- * Fix incorrect handling in a couple of places
- * Improve and unify error strings
- * Fix issue #2
+ N Add a function nfc.(*Device).LastError()
+ N Add a function nfc.(*Device).InitiatorDeselectTarget()
+ B Fix incorrect handling in a couple of places
+ C Improve and unify error strings
+ B Fix issue #2
+
+Release 1.0 (2014-04-06):
+ R This major release is considered stable. The interface of this wrapper is
+   stable until further notice.
+ I Rename constants to reflect Go naming conventions
+ I Change methods of type nfc.Device to use a value receiver
+ B Fix an issue were copying structs of type nfc.Device could cause a pointer
+   into unallocated memory to come into existence
