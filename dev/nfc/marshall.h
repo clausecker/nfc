@@ -36,7 +36,7 @@
  */
 
 /*
- * On all latforms where a Go port exists, the Go type int has the same
+ * On all platforms where a Go port exists, the Go type int has the same
  * attributes as the C type ptrdiff_t.
  */
 typedef ptrdiff_t GoInt;
