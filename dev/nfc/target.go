@@ -15,28 +15,15 @@
 package nfc
 
 // #include <nfc/nfc.h>
+// #include "marshall.h"
 import "C"
 import "unsafe"
 import "errors"
 
-// make a slice with bytes from buf and length l that does not overlay over buf
-func byteSliceFromC(buf *C.uint8_t, l C.size_t) []byte {
-	return append([]byte(nil), C.GoBytes(unsafe.Pointer(buf), C.int(l))...)
-}
-
-// make an nfc_target with modulation set. This returns a pointer allocated by
-// C.malloc which needs to be free'd later on.
-func makeTarget(mod, baud int) unsafe.Pointer {
-	ptr := C.malloc(C.size_t(unsafe.Sizeof(C.nfc_target{})))
-	(*C.nfc_target)(ptr).nm = C.nfc_modulation{
-		nmt: C.nfc_modulation_type(mod),
-		nbr: C.nfc_baud_rate(baud),
-	}
-
-	// C89 says: A pointer to a struct is equal to a point to its first
-	// member and a pointer to a union is equal to a pointer to any of its
-	// members. Therefore we can simply return ptr to fit all use cases
-	return ptr
+// allocate space using C.malloc() for a C.nfc_target.
+func mallocTarget() *C.nfc_target {
+	targetSize := C.size_t(unsafe.Sizeof(C.nfc_target{}))
+	return (*C.nfc_target)(C.malloc(targetSize))
 }
 
 // generic implementation for the String() functions of the Target interface.
@@ -91,35 +78,32 @@ func UnmarshallTarget(ptr unsafe.Pointer) Target {
 	return unmarshallTarget((*C.nfc_target)(ptr))
 }
 
-// internal wrapper with C types for conveinience
+// internal wrapper with C types for convenience
 func unmarshallTarget(t *C.nfc_target) Target {
-	ptr := unsafe.Pointer(t)
-	m := Modulation{Type: int(t.nm.nmt), BaudRate: int(t.nm.nbr)}
-
-	switch m.Type {
+	switch C.getModulationType(t) {
 	case ISO14443a:
-		r := unmarshallISO14443aTarget((*C.nfc_iso14443a_info)(ptr), m)
+		r := unmarshallISO14443aTarget(t)
 		return &r
 	case Jewel:
-		r := unmarshallJewelTarget((*C.nfc_jewel_info)(ptr), m)
+		r := unmarshallJewelTarget(t)
 		return &r
 	case ISO14443b:
-		r := unmarshallISO14443bTarget((*C.nfc_iso14443b_info)(ptr), m)
+		r := unmarshallISO14443bTarget(t)
 		return &r
 	case ISO14443bi:
-		r := unmarshallISO14443biTarget((*C.nfc_iso14443bi_info)(ptr), m)
+		r := unmarshallISO14443biTarget(t)
 		return &r
 	case ISO14443b2sr:
-		r := unmarshallISO14443b2srTarget((*C.nfc_iso14443b2sr_info)(ptr), m)
+		r := unmarshallISO14443b2srTarget(t)
 		return &r
-	case ISO14443B2CT:
-		r := unmarshallISO14443b2ctTarget((*C.nfc_iso14443b2ct_info)(ptr), m)
+	case ISO14443b2ct:
+		r := unmarshallISO14443b2ctTarget(t)
 		return &r
 	case Felica:
-		r := unmarshallFelicaTarget((*C.nfc_felica_info)(ptr), m)
+		r := unmarshallFelicaTarget(t)
 		return &r
 	case DEP:
-		r := unmarshallDEPTarget((*C.nfc_dep_info)(ptr), m)
+		r := unmarshallDEPTarget(t)
 		return &r
 	default:
 		panic(errors.New("Cannot determine target type"))
@@ -142,7 +126,8 @@ type DEPTarget struct {
 	BR      byte     // supported receive-bit rate
 	TO      byte     // timeout value
 	PP      byte     // PP parameters
-	GB      []byte   // general bytes, up to 48 bytes
+	GB      [48]byte // general bytes
+	GBlen   int      // length of the GB field
 	DepMode int      // DEP mode
 	Baud    int      // Baud rate
 }
@@ -157,55 +142,35 @@ func (t *DEPTarget) Modulation() Modulation {
 }
 
 // Make a DEPTarget from an nfc_dep_info
-func unmarshallDEPTarget(c *C.nfc_dep_info, m Modulation) DEPTarget {
-	var nfcid3 [10]byte
-	for i := range nfcid3 {
-		nfcid3[i] = byte(c.abtNFCID3[i])
-	}
+func unmarshallDEPTarget(c *C.nfc_target) DEPTarget {
+	var dt DEPTarget
 
-	return DEPTarget{
-		NFCID3: nfcid3,
-		DID:    byte(c.btDID),
-		BS:     byte(c.btBS),
-		BR:     byte(c.btBR),
-		TO:     byte(c.btTO),
-		PP:     byte(c.btPP),
-		GB:     byteSliceFromC(&c.abtGB[0], c.szGB),
-		Baud:   m.BaudRate,
-	}
+	C.unmarshallDEPTarget((*C.struct_DEPTarget)(unsafe.Pointer(&dt)), c)
+
+	return dt
 }
 
 // See documentation in Target for more details.
 func (d *DEPTarget) Marshall() uintptr {
-	c := (*C.nfc_dep_info)(makeTarget(DEP, d.Baud))
+	nt := mallocTarget()
+	dt := (*C.struct_DEPTarget)(unsafe.Pointer(d))
 
-	for i, b := range d.NFCID3 {
-		c.abtNFCID3[i] = C.uint8_t(b)
-	}
+	C.marshallDEPTarget(nt, dt)
 
-	c.btDID = C.uint8_t(d.DID)
-	c.btBS = C.uint8_t(d.BS)
-	c.btBR = C.uint8_t(d.BR)
-	c.btTO = C.uint8_t(d.TO)
-	c.btPP = C.uint8_t(d.PP)
-
-	c.szGB = C.size_t(len(d.GB))
-	for i, b := range d.GB {
-		c.abtGB[i] = C.uint8_t(b)
-	}
-
-	return uintptr(unsafe.Pointer(c))
+	return uintptr(unsafe.Pointer(nt))
 }
 
 // NFC ISO14443A tag (MIFARE) information. ISO14443aTarget mirrors
 // nfc_iso14443a_info.
 type ISO14443aTarget struct {
-	Atqa [2]byte
-	Sak  byte
-	Uid  []byte // up to 10 bytes
+	Atqa   [2]byte
+	Sak    byte
+	UidLen int // length of the Uid field
+	Uid    [10]byte
+	AtsLen int // length of the ATS field
 	// Maximal theoretical ATS is FSD-2, FSD=256 for FSDI=8 in RATS
-	Ats  []byte // up to 254 bytes
-	Baud int    // Baud rate
+	Ats  [254]byte // up to 254 bytes
+	Baud int       // Baud rate
 }
 
 func (t *ISO14443aTarget) String() string {
@@ -218,37 +183,22 @@ func (t *ISO14443aTarget) Modulation() Modulation {
 }
 
 // Make an ISO14443aTarget from an nfc_iso14443a_info
-func unmarshallISO14443aTarget(c *C.nfc_iso14443a_info, m Modulation) ISO14443aTarget {
-	atqa := [2]byte{byte(c.abtAtqa[0]), byte(c.abtAtqa[1])}
+func unmarshallISO14443aTarget(c *C.nfc_target) ISO14443aTarget {
+	var it ISO14443aTarget
 
-	return ISO14443aTarget{
-		Atqa: atqa,
-		Sak:  byte(c.btSak),
-		Uid:  byteSliceFromC(&c.abtUid[0], c.szUidLen),
-		Ats:  byteSliceFromC(&c.abtAts[0], c.szAtsLen),
-		Baud: m.BaudRate,
-	}
+	C.unmarshallISO14443aTarget((*C.struct_ISO14443aTarget)(unsafe.Pointer(&it)), c)
+
+	return it
 }
 
 // See documentation in Target for more details.
 func (d *ISO14443aTarget) Marshall() uintptr {
-	c := (*C.nfc_iso14443a_info)(makeTarget(ISO14443a, d.Baud))
+	nt := mallocTarget()
+	it := (*C.struct_ISO14443aTarget)(unsafe.Pointer(d))
 
-	c.abtAtqa[0] = C.uint8_t(d.Atqa[0])
-	c.abtAtqa[1] = C.uint8_t(d.Atqa[1])
-	c.btSak = C.uint8_t(d.Sak)
+	C.marshallISO14443aTarget(nt, it)
 
-	c.szUidLen = C.size_t(len(d.Uid))
-	for i, b := range d.Uid {
-		c.abtUid[i] = C.uint8_t(b)
-	}
-
-	c.szAtsLen = C.size_t(len(d.Ats))
-	for i, b := range d.Ats {
-		c.abtAts[i] = C.uint8_t(b)
-	}
-
-	return uintptr(unsafe.Pointer(c))
+	return uintptr(unsafe.Pointer(nt))
 }
 
 // NFC FeLiCa tag information
@@ -271,46 +221,22 @@ func (t *FelicaTarget) Modulation() Modulation {
 }
 
 // Make an FelicaTarget from an nfc_felica_info
-func unmarshallFelicaTarget(c *C.nfc_felica_info, m Modulation) FelicaTarget {
-	t := FelicaTarget{
-		Len:     uint(c.szLen),
-		ResCode: byte(c.btResCode),
-		Baud:    m.BaudRate,
-	}
+func unmarshallFelicaTarget(c *C.nfc_target) FelicaTarget {
+	var ft FelicaTarget
 
-	for i, b := range c.abtId {
-		t.Id[i] = byte(b)
-	}
+	C.unmarshallFelicaTarget((*C.struct_FelicaTarget)(unsafe.Pointer(&ft)), c)
 
-	for i, b := range c.abtPad {
-		t.Pad[i] = byte(b)
-	}
-
-	t.SysCode[0] = byte(c.abtSysCode[0])
-	t.SysCode[1] = byte(c.abtSysCode[1])
-
-	return t
+	return ft
 }
 
 // See documentation in Target for more details.
 func (d *FelicaTarget) Marshall() uintptr {
-	c := (*C.nfc_felica_info)(makeTarget(Felica, d.Baud))
+	nt := mallocTarget()
+	ft := (*C.struct_FelicaTarget)(unsafe.Pointer(d))
 
-	c.szLen = C.size_t(d.Len)
-	c.btResCode = C.uint8_t(d.ResCode)
+	C.marshallFelicaTarget(nt, ft)
 
-	for i, b := range d.Id {
-		c.abtId[i] = C.uint8_t(b)
-	}
-
-	for i, b := range d.Pad {
-		c.abtPad[i] = C.uint8_t(b)
-	}
-
-	c.abtSysCode[0] = C.uint8_t(d.SysCode[0])
-	c.abtSysCode[1] = C.uint8_t(d.SysCode[1])
-
-	return uintptr(unsafe.Pointer(c))
+	return uintptr(unsafe.Pointer(nt))
 }
 
 // NFC ISO14443B tag information. See ISO14443-3 for more details.
@@ -332,51 +258,31 @@ func (t *ISO14443bTarget) Modulation() Modulation {
 }
 
 // Make an ISO14443bTarget from an nfc_iso14443b_info
-func unmarshallISO14443bTarget(c *C.nfc_iso14443b_info, m Modulation) ISO14443bTarget {
-	t := ISO14443bTarget{CardIdentifier: byte(c.ui8CardIdentifier), Baud: m.BaudRate}
+func unmarshallISO14443bTarget(c *C.nfc_target) ISO14443bTarget {
+	var it ISO14443bTarget
 
-	for i, b := range c.abtPupi {
-		t.Pupi[i] = byte(b)
-	}
+	C.unmarshallISO14443bTarget((*C.struct_ISO14443bTarget)(unsafe.Pointer(&it)), c)
 
-	for i, b := range c.abtApplicationData {
-		t.ApplicationData[i] = byte(b)
-	}
-
-	for i, b := range c.abtProtocolInfo {
-		t.ProtocolInfo[i] = byte(b)
-	}
-
-	return t
+	return it
 }
 
 // See documentation in Target for more details.
 func (d *ISO14443bTarget) Marshall() uintptr {
-	c := (*C.nfc_iso14443b_info)(makeTarget(ISO14443b, d.Baud))
+	nt := mallocTarget()
+	it := (*C.struct_ISO14443bTarget)(unsafe.Pointer(d))
 
-	c.ui8CardIdentifier = C.uint8_t(d.CardIdentifier)
+	C.marshallISO14443bTarget(nt, it)
 
-	for i, b := range d.Pupi {
-		c.abtPupi[i] = C.uint8_t(b)
-	}
-
-	for i, b := range d.ApplicationData {
-		c.abtApplicationData[i] = C.uint8_t(b)
-	}
-
-	for i, b := range d.ProtocolInfo {
-		c.abtProtocolInfo[i] = C.uint8_t(b)
-	}
-
-	return uintptr(unsafe.Pointer(c))
+	return uintptr(unsafe.Pointer(nt))
 }
 
 // NFC ISO14443B' tag information
 type ISO14443biTarget struct {
-	DIV    [4]byte // 4 LSBytes of tag serial number
-	VerLog byte    // Software version & type of REPGEN
-	Config byte    // Config Byte, present if long REPGEN
-	Atr    []byte  // ATR, if any. At most 33 bytes
+	DIV    [4]byte  // 4 LSBytes of tag serial number
+	VerLog byte     // Software version & type of REPGEN
+	Config byte     // Config Byte, present if long REPGEN
+	AtrLen int      // length of the Atr field
+	Atr    [33]byte // ATR, if any. At most 33 bytes
 	Baud   int
 }
 
@@ -390,37 +296,22 @@ func (t *ISO14443biTarget) Modulation() Modulation {
 }
 
 // Make an ISO14443biTarget from an nfc_iso14443bi_info
-func unmarshallISO14443biTarget(c *C.nfc_iso14443bi_info, m Modulation) ISO14443biTarget {
-	t := ISO14443biTarget{
-		VerLog: byte(c.btVerLog),
-		Config: byte(c.btConfig),
-		Atr:    byteSliceFromC(&c.abtAtr[0], c.szAtrLen),
-		Baud:   m.BaudRate,
-	}
+func unmarshallISO14443biTarget(c *C.nfc_target) ISO14443biTarget {
+	var it ISO14443biTarget
 
-	for i, b := range c.abtDIV {
-		t.DIV[i] = byte(b)
-	}
+	C.unmarshallISO14443biTarget((*C.struct_ISO14443biTarget)(unsafe.Pointer(&it)), c)
 
-	return t
+	return it
 }
 
 // See documentation in Target for more details.
 func (d *ISO14443biTarget) Marshall() uintptr {
-	c := (*C.nfc_iso14443bi_info)(makeTarget(ISO14443bi, d.Baud))
+	nt := mallocTarget()
+	it := (*C.struct_ISO14443biTarget)(unsafe.Pointer(d))
 
-	c.btVerLog = C.uint8_t(d.VerLog)
-	c.btConfig = C.uint8_t(d.Config)
+	C.marshallISO14443biTarget(nt, it)
 
-	for i, b := range d.Atr {
-		c.abtAtr[i] = C.uint8_t(b)
-	}
-
-	for i, b := range d.DIV {
-		c.abtDIV[i] = C.uint8_t(b)
-	}
-
-	return uintptr(unsafe.Pointer(c))
+	return uintptr(unsafe.Pointer(nt))
 }
 
 // NFC ISO14443-2B ST SRx tag information
@@ -439,25 +330,22 @@ func (t *ISO14443b2srTarget) Modulation() Modulation {
 }
 
 // Make an ISO14443b2srTarget from an nfc_iso14443b2sr_info
-func unmarshallISO14443b2srTarget(c *C.nfc_iso14443b2sr_info, m Modulation) ISO14443b2srTarget {
-	t := ISO14443b2srTarget{Baud: m.BaudRate}
+func unmarshallISO14443b2srTarget(c *C.nfc_target) ISO14443b2srTarget {
+	var it ISO14443b2srTarget
 
-	for i, b := range c.abtUID {
-		t.UID[i] = byte(b)
-	}
+	C.unmarshallISO14443b2srTarget((*C.struct_ISO14443b2srTarget)(unsafe.Pointer(&it)), c)
 
-	return t
+	return it
 }
 
 // See documentation in Target for more details.
 func (d *ISO14443b2srTarget) Marshall() uintptr {
-	c := (*C.nfc_iso14443b2sr_info)(makeTarget(ISO14443b2sr, d.Baud))
+	nt := mallocTarget()
+	it := (*C.struct_ISO14443b2srTarget)(unsafe.Pointer(d))
 
-	for i, b := range d.UID {
-		c.abtUID[i] = C.uint8_t(b)
-	}
+	C.marshallISO14443b2srTarget(nt, it)
 
-	return uintptr(unsafe.Pointer(c))
+	return uintptr(unsafe.Pointer(nt))
 }
 
 // NFC ISO14443-2B ASK CTx tag information
@@ -474,36 +362,26 @@ func (t *ISO14443b2ctTarget) String() string {
 
 // Type is always ISO1444B2CT
 func (t *ISO14443b2ctTarget) Modulation() Modulation {
-	return Modulation{ISO14443B2CT, t.Baud}
+	return Modulation{ISO14443b2ct, t.Baud}
 }
 
 // Make an ISO14443b2ctTarget from an nfc_iso14443b2ct_info
-func unmarshallISO14443b2ctTarget(c *C.nfc_iso14443b2ct_info, m Modulation) ISO14443b2ctTarget {
-	t := ISO14443b2ctTarget{
-		ProdCode: byte(c.btProdCode),
-		FabCode:  byte(c.btFabCode),
-		Baud:     m.BaudRate,
-	}
+func unmarshallISO14443b2ctTarget(c *C.nfc_target) ISO14443b2ctTarget {
+	var it ISO14443b2ctTarget
 
-	for i, b := range c.abtUID {
-		t.UID[i] = byte(b)
-	}
+	C.unmarshallISO14443b2ctTarget((*C.struct_ISO14443b2ctTarget)(unsafe.Pointer(&it)), c)
 
-	return t
+	return it
 }
 
 // See documentation in Target for more details.
 func (d *ISO14443b2ctTarget) Marshall() uintptr {
-	c := (*C.nfc_iso14443b2ct_info)(makeTarget(ISO14443B2CT, d.Baud))
+	nt := mallocTarget()
+	it := (*C.struct_ISO14443b2ctTarget)(unsafe.Pointer(d))
 
-	c.btProdCode = C.uint8_t(d.ProdCode)
-	c.btFabCode = C.uint8_t(d.FabCode)
+	C.marshallISO14443b2ctTarget(nt, it)
 
-	for i, b := range d.UID {
-		c.abtUID[i] = C.uint8_t(b)
-	}
-
-	return uintptr(unsafe.Pointer(c))
+	return uintptr(unsafe.Pointer(nt))
 }
 
 // NFC Jewel tag information
@@ -523,28 +401,19 @@ func (t *JewelTarget) Modulation() Modulation {
 }
 
 // Make a JewelTarget from an nfc_jewel_info
-func unmarshallJewelTarget(c *C.nfc_jewel_info, m Modulation) JewelTarget {
-	t := JewelTarget{Baud: m.BaudRate}
+func unmarshallJewelTarget(c *C.nfc_target) JewelTarget {
+	var jt JewelTarget
 
-	t.SensRes[0] = byte(c.btSensRes[0])
-	t.SensRes[1] = byte(c.btSensRes[1])
+	C.unmarshallJewelTarget((*C.struct_JewelTarget)(unsafe.Pointer(&jt)), c)
 
-	for i, b := range c.btId {
-		t.Id[i] = byte(b)
-	}
-
-	return t
+	return jt
 }
 
 func (d *JewelTarget) Marshall() uintptr {
-	c := (*C.nfc_jewel_info)(makeTarget(Jewel, d.Baud))
+	nt := mallocTarget()
+	jt := (*C.struct_JewelTarget)(unsafe.Pointer(d))
 
-	c.btSensRes[0] = C.uint8_t(d.SensRes[0])
-	c.btSensRes[1] = C.uint8_t(d.SensRes[1])
+	C.marshallJewelTarget(nt, jt)
 
-	for i, b := range d.Id {
-		c.btId[i] = C.uint8_t(b)
-	}
-
-	return uintptr(unsafe.Pointer(c))
+	return uintptr(unsafe.Pointer(nt))
 }
