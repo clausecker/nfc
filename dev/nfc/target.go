@@ -150,7 +150,11 @@ func unmarshallDEPTarget(c *C.nfc_target) DEPTarget {
 	return dt
 }
 
-// See documentation in Target for more details.
+// Marshall() returns a pointer to an nfc_target allocated with C.malloc() that
+// contains the same data as the Target. Don't forget to C.free() the result of
+// Marshall() afterwards. A runtime panic may occur if any slice referenced by a
+// Target has been made larger than the maximum length mentioned in the
+// respective comments.
 func (d *DEPTarget) Marshall() uintptr {
 	nt := mallocTarget()
 	dt := (*C.struct_DEPTarget)(unsafe.Pointer(d))
@@ -191,7 +195,11 @@ func unmarshallISO14443aTarget(c *C.nfc_target) ISO14443aTarget {
 	return it
 }
 
-// See documentation in Target for more details.
+// Marshall() returns a pointer to an nfc_target allocated with C.malloc() that
+// contains the same data as the Target. Don't forget to C.free() the result of
+// Marshall() afterwards. A runtime panic may occur if any slice referenced by a
+// Target has been made larger than the maximum length mentioned in the
+// respective comments.
 func (d *ISO14443aTarget) Marshall() uintptr {
 	nt := mallocTarget()
 	it := (*C.struct_ISO14443aTarget)(unsafe.Pointer(d))
@@ -229,7 +237,11 @@ func unmarshallFelicaTarget(c *C.nfc_target) FelicaTarget {
 	return ft
 }
 
-// See documentation in Target for more details.
+// Marshall() returns a pointer to an nfc_target allocated with C.malloc() that
+// contains the same data as the Target. Don't forget to C.free() the result of
+// Marshall() afterwards. A runtime panic may occur if any slice referenced by a
+// Target has been made larger than the maximum length mentioned in the
+// respective comments.
 func (d *FelicaTarget) Marshall() uintptr {
 	nt := mallocTarget()
 	ft := (*C.struct_FelicaTarget)(unsafe.Pointer(d))
@@ -266,7 +278,11 @@ func unmarshallISO14443bTarget(c *C.nfc_target) ISO14443bTarget {
 	return it
 }
 
-// See documentation in Target for more details.
+// Marshall() returns a pointer to an nfc_target allocated with C.malloc() that
+// contains the same data as the Target. Don't forget to C.free() the result of
+// Marshall() afterwards. A runtime panic may occur if any slice referenced by a
+// Target has been made larger than the maximum length mentioned in the
+// respective comments.
 func (d *ISO14443bTarget) Marshall() uintptr {
 	nt := mallocTarget()
 	it := (*C.struct_ISO14443bTarget)(unsafe.Pointer(d))
@@ -304,7 +320,11 @@ func unmarshallISO14443biTarget(c *C.nfc_target) ISO14443biTarget {
 	return it
 }
 
-// See documentation in Target for more details.
+// Marshall() returns a pointer to an nfc_target allocated with C.malloc() that
+// contains the same data as the Target. Don't forget to C.free() the result of
+// Marshall() afterwards. A runtime panic may occur if any slice referenced by a
+// Target has been made larger than the maximum length mentioned in the
+// respective comments.
 func (d *ISO14443biTarget) Marshall() uintptr {
 	nt := mallocTarget()
 	it := (*C.struct_ISO14443biTarget)(unsafe.Pointer(d))
@@ -338,7 +358,11 @@ func unmarshallISO14443b2srTarget(c *C.nfc_target) ISO14443b2srTarget {
 	return it
 }
 
-// See documentation in Target for more details.
+// Marshall() returns a pointer to an nfc_target allocated with C.malloc() that
+// contains the same data as the Target. Don't forget to C.free() the result of
+// Marshall() afterwards. A runtime panic may occur if any slice referenced by a
+// Target has been made larger than the maximum length mentioned in the
+// respective comments.
 func (d *ISO14443b2srTarget) Marshall() uintptr {
 	nt := mallocTarget()
 	it := (*C.struct_ISO14443b2srTarget)(unsafe.Pointer(d))
@@ -374,7 +398,11 @@ func unmarshallISO14443b2ctTarget(c *C.nfc_target) ISO14443b2ctTarget {
 	return it
 }
 
-// See documentation in Target for more details.
+// Marshall() returns a pointer to an nfc_target allocated with C.malloc() that
+// contains the same data as the Target. Don't forget to C.free() the result of
+// Marshall() afterwards. A runtime panic may occur if any slice referenced by a
+// Target has been made larger than the maximum length mentioned in the
+// respective comments.
 func (d *ISO14443b2ctTarget) Marshall() uintptr {
 	nt := mallocTarget()
 	it := (*C.struct_ISO14443b2ctTarget)(unsafe.Pointer(d))
@@ -409,6 +437,11 @@ func unmarshallJewelTarget(c *C.nfc_target) JewelTarget {
 	return jt
 }
 
+// Marshall() returns a pointer to an nfc_target allocated with C.malloc() that
+// contains the same data as the Target. Don't forget to C.free() the result of
+// Marshall() afterwards. A runtime panic may occur if any slice referenced by a
+// Target has been made larger than the maximum length mentioned in the
+// respective comments.
 func (d *JewelTarget) Marshall() uintptr {
 	nt := mallocTarget()
 	jt := (*C.struct_JewelTarget)(unsafe.Pointer(d))
