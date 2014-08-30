@@ -60,7 +60,7 @@ const (
 	// is required to be completely compatible, including the arbitrary
 	// parity bits. When this option is disabled, the functions to
 	// communicating bits should be used.
-	HANDLE_PARITY
+	HandleParity
 
 	// This option can be used to enable or disable the electronic field of
 	// the NFC device.
@@ -129,10 +129,10 @@ const (
 // NFC baud rates. UNDEFINED is also a valid baud rate, albeit defined
 // further below.
 const (
-	Nbr_106 = iota + 1
-	Nbr_212
-	Nbr_424
-	Nbr_847
+	Nbr106 = iota + 1
+	Nbr212
+	Nbr424
+	Nbr847
 )
 
 // NFC modes. An NFC device can either be a target or an initiator.
