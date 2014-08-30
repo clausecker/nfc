@@ -127,7 +127,7 @@ type DEPTarget struct {
 	TO      byte     // timeout value
 	PP      byte     // PP parameters
 	GB      [48]byte // general bytes
-	GBlen   int      // length of the GB field
+	GBLen   int      // length of the GB field
 	DepMode int      // DEP mode
 	Baud    int      // Baud rate
 }
@@ -169,8 +169,8 @@ func (d *DEPTarget) Marshall() uintptr {
 type ISO14443aTarget struct {
 	Atqa   [2]byte
 	Sak    byte
-	UidLen int // length of the Uid field
-	Uid    [10]byte
+	UIDLen int // length of the Uid field
+	UID    [10]byte
 	AtsLen int // length of the ATS field
 	// Maximal theoretical ATS is FSD-2, FSD=256 for FSDI=8 in RATS
 	Ats  [254]byte // up to 254 bytes
@@ -213,7 +213,7 @@ func (d *ISO14443aTarget) Marshall() uintptr {
 type FelicaTarget struct {
 	Len     uint
 	ResCode byte
-	Id      [8]byte
+	ID      [8]byte
 	Pad     [8]byte
 	SysCode [2]byte
 	Baud    int
@@ -415,7 +415,7 @@ func (d *ISO14443b2ctTarget) Marshall() uintptr {
 // NFC Jewel tag information
 type JewelTarget struct {
 	SensRes [2]byte
-	Id      [4]byte
+	ID      [4]byte
 	Baud    int
 }
 

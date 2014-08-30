@@ -54,7 +54,7 @@ struct DEPTarget {
 	uint8_t	TO;
 	uint8_t	PP;
 	uint8_t	GB[48];
-	GoInt	GBlen;
+	GoInt	GBLen;
 	GoInt	DepMode;
 	GoInt	Baud;
 };
@@ -65,8 +65,8 @@ extern void marshallDEPTarget(nfc_target*, const struct DEPTarget*);
 struct ISO14443aTarget {
 	uint8_t	Atqa[2];
 	uint8_t	Sak;
-	GoInt	UidLen;
-	uint8_t	Uid[10];
+	GoInt	UIDLen;
+	uint8_t	UID[10];
 	GoInt	AtsLen;
 	uint8_t	Ats[254];
 	GoInt	Baud;
@@ -78,7 +78,7 @@ extern void marshallISO14443aTarget(nfc_target*, const struct ISO14443aTarget*);
 struct FelicaTarget {
 	GoInt	Len;
 	uint8_t	ResCode;
-	uint8_t	Id[8];
+	uint8_t	ID[8];
 	uint8_t	Pad[8];
 	uint8_t	SysCode[2];
 	GoInt	Baud;
@@ -130,7 +130,7 @@ extern void marshallISO14443b2ctTarget(nfc_target*, const struct ISO14443b2ctTar
 
 struct JewelTarget {
 	uint8_t	SensRes[2];
-	uint8_t	Id[4];
+	uint8_t	ID[4];
 	GoInt	Baud;
 };
 

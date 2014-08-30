@@ -36,7 +36,7 @@ unmarshallDEPTarget(struct DEPTarget *dt, const nfc_target *nt)
 	dt->TO = di->btTO;
 	dt->PP = di->btPP;
 	memcpy(dt->GB, di->abtGB, sizeof(dt->GB));
-	dt->GBlen = di->szGB;
+	dt->GBLen = di->szGB;
 	dt->DepMode = di->ndm;
 
 	dt->Baud = nt->nm.nbr;
@@ -54,7 +54,7 @@ marshallDEPTarget(nfc_target *nt, const struct DEPTarget *dt)
 	di->btTO = dt->TO;
 	di->btPP = dt->PP;
 	memcpy(di->abtGB, dt->GB, sizeof(dt->GB));
-	di->szGB = dt->GBlen;
+	di->szGB = dt->GBLen;
 	di->ndm = dt->DepMode;
 
 	nt->nm.nbr = dt->Baud;
@@ -68,8 +68,8 @@ unmarshallISO14443aTarget(struct ISO14443aTarget *it, const nfc_target *nt)
 
 	memcpy(it->Atqa, ii->abtAtqa, sizeof(it->Atqa));
 	it->Sak = ii->btSak;
-	it->UidLen = ii->szUidLen;
-	memcpy(it->Uid, ii->abtUid, sizeof(it->Uid));
+	it->UIDLen = ii->szUidLen;
+	memcpy(it->UID, ii->abtUid, sizeof(it->UID));
 	it->AtsLen = ii->szAtsLen;
 	memcpy(it->Ats, ii->abtAts, sizeof(it->Ats));
 
@@ -83,8 +83,8 @@ marshallISO14443aTarget(nfc_target *nt, const struct ISO14443aTarget *it)
 
 	memcpy(ii->abtAtqa, it->Atqa, sizeof(it->Atqa));
 	ii->btSak = it->Sak;
-	ii->szUidLen = it->UidLen;
-	memcpy(ii->abtUid, it->Uid, sizeof(it->Uid));
+	ii->szUidLen = it->UIDLen;
+	memcpy(ii->abtUid, it->UID, sizeof(it->UID));
 	ii->szAtsLen = it->AtsLen;
 	memcpy(ii->abtAts, it->Ats, sizeof(it->Ats));
 
@@ -99,7 +99,7 @@ unmarshallFelicaTarget(struct FelicaTarget *ft, const nfc_target *nt)
 
 	ft->Len = fi->szLen;
 	ft->ResCode = fi->btResCode;
-	memcpy(ft->Id, fi->abtId, sizeof(ft->Id));
+	memcpy(ft->ID, fi->abtId, sizeof(ft->ID));
 	memcpy(ft->Pad, fi->abtPad, sizeof(ft->Pad));
 	memcpy(ft->SysCode, fi->abtSysCode, sizeof(ft->SysCode));
 
@@ -113,7 +113,7 @@ marshallFelicaTarget(nfc_target *nt, const struct FelicaTarget *ft)
 
 	fi->szLen = ft->Len;
 	fi->btResCode = ft->ResCode;
-	memcpy(fi->abtId, ft->Id, sizeof(ft->Id));
+	memcpy(fi->abtId, ft->ID, sizeof(ft->ID));
 	memcpy(fi->abtPad, ft->Pad, sizeof(ft->Pad));
 	memcpy(fi->abtSysCode, ft->SysCode, sizeof(ft->SysCode));
 
@@ -229,7 +229,7 @@ unmarshallJewelTarget(struct JewelTarget *jt, const nfc_target *nt)
 	const nfc_jewel_info *ji = &nt->nti.nji;
 
 	memcpy(jt->SensRes, ji->btSensRes, sizeof(jt->SensRes));
-	memcpy(jt->Id, ji->btId, sizeof(jt->Id));
+	memcpy(jt->ID, ji->btId, sizeof(jt->ID));
 
 	jt->Baud = nt->nm.nbr;
 }
@@ -240,7 +240,7 @@ marshallJewelTarget(nfc_target *nt, const struct JewelTarget *jt)
 	nfc_jewel_info *ji = &nt->nti.nji;
 
 	memcpy(ji->btSensRes, jt->SensRes, sizeof(jt->SensRes));
-	memcpy(ji->btId, jt->Id, sizeof(jt->Id));
+	memcpy(ji->btId, jt->ID, sizeof(jt->ID));
 
 	nt->nm.nbr = jt->Baud;
 	nt->nm.nmt = NMT_JEWEL;
