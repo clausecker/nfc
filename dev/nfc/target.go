@@ -106,7 +106,7 @@ func unmarshallTarget(t *C.nfc_target) Target {
 		r := unmarshallDEPTarget(t)
 		return &r
 	default:
-		panic(errors.New("Cannot determine target type"))
+		panic(errors.New("cannot determine target type"))
 	}
 }
 

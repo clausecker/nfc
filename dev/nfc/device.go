@@ -48,7 +48,7 @@ func (c *context) open(conn string) (d Device, err error) {
 	dev := C.nfc_open(c.c, cs.ptr)
 
 	if dev == nil {
-		err = errors.New("Cannot open NFC device")
+		err = errors.New("cannot open NFC device")
 		return
 	}
 
@@ -395,11 +395,11 @@ func (d Device) TargetSendBits(tx []byte, txPar []byte, txLength uint) (n int, e
 	}
 
 	if len(tx) != len(txPar) {
-		return ESOFT, errors.New("Invariant doesn't hold")
+		return ESOFT, errors.New("invariant doesn't hold")
 	}
 
 	if uint(len(tx))*8 < txLength {
-		return ESOFT, errors.New("Slice shorter than specified bit count")
+		return ESOFT, errors.New("slice shorter than specified bit count")
 	}
 
 	n = int(C.nfc_target_send_bits(
@@ -438,11 +438,11 @@ func (d Device) TargetTransceiveBits(rx []byte, rxPar []byte, rxLength uint) (n 
 	}
 
 	if len(rx) != len(rxPar) {
-		return ESOFT, errors.New("Invariant doesn't hold")
+		return ESOFT, errors.New("invariant doesn't hold")
 	}
 
 	if uint(len(rx))*8 < rxLength {
-		return ESOFT, errors.New("Slice shorter than specified bit count")
+		return ESOFT, errors.New("slice shorter than specified bit count")
 	}
 
 	n = int(C.nfc_target_receive_bits(

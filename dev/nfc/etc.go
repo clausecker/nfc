@@ -83,7 +83,7 @@ func (c *context) initContext() {
 	C.nfc_init(&c.c)
 
 	if c.c == nil {
-		panic(errors.New("Cannot initialize libnfc"))
+		panic(errors.New("cannot initialize libnfc"))
 	}
 
 	return
@@ -153,7 +153,7 @@ func newConnstring(s string) (connstring, error) {
 	}
 
 	if len(s) >= BufsizeConnstring {
-		return connstring{nil}, errors.New("String too long for Connstring")
+		return connstring{nil}, errors.New("string too long for Connstring")
 	}
 
 	return connstring{C.CString(s)}, nil

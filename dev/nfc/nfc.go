@@ -176,7 +176,7 @@ const (
 	EOPABORTED   = -7  // Operation aborted (by user)
 	ENOTIMPL     = -8  // Not (yet) implemented
 	ETGRELEASED  = -10 // Target released
-	ERFTRANS     = -20 // Error while RF transmission
+	ERFTRANS     = -20 // Error during RF transmission
 	EMFCAUTHFAIL = -30 // MIFARE Classic: authentication failed
 	ESOFT        = -80 // Software error (allocation, file/pipe creation, etc.)
 	ECHIP        = -90 // Device's internal chip error
@@ -186,19 +186,20 @@ const (
 // direct access to the error strings. Stupidly, only the error string for the
 // error code of an nfc_device can be read out.
 var errorMessages = map[int]string{
-	SUCCESS:      "Success",
-	EIO:          "Input / Output Error",
-	EINVARG:      "Invalid argument(s)",
-	EDEVNOTSUPP:  "Not Supported by Device",
-	ENOTSUCHDEV:  "No Such Device",
-	EOVFLOW:      "Buffer Overflow",
-	ETIMEOUT:     "Timeout",
-	EOPABORTED:   "Operation Aborted",
-	ENOTIMPL:     "Not (yet) Implemented",
-	ETGRELEASED:  "Target Released",
-	EMFCAUTHFAIL: "Mifare Authentication Failed",
-	ERFTRANS:     "RF Transmission Error",
-	ECHIP:        "Device's Internal Chip Error",
+	SUCCESS:      "success",
+	EIO:          "input / output error",
+	EINVARG:      "invalid argument(s)",
+	EDEVNOTSUPP:  "not supported by device",
+	ENOTSUCHDEV:  "no such device",
+	EOVFLOW:      "buffer overflow",
+	ETIMEOUT:     "timeout",
+	EOPABORTED:   "operation aborted",
+	ENOTIMPL:     "not (yet) implemented",
+	ETGRELEASED:  "target released",
+	EMFCAUTHFAIL: "Mifare Classic authentication failed",
+	ERFTRANS:     "RF transmission error",
+	ESOFT:        "software error",
+	ECHIP:        "device's internal chip error",
 }
 
 // the global library context

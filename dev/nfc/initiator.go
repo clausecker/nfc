@@ -148,11 +148,11 @@ func (d Device) InitiatorTransceiveBits(tx, txPar []byte, txLength uint, rx, rxP
 	}
 
 	if len(tx) != len(txPar) || len(rx) != len(rxPar) {
-		return ESOFT, errors.New("Invariant doesn't hold")
+		return ESOFT, errors.New("invariant doesn't hold")
 	}
 
 	if uint(len(tx))*8 < txLength {
-		return ESOFT, errors.New("Slice shorter than specified bit count")
+		return ESOFT, errors.New("slice shorter than specified bit count")
 	}
 
 	txptr := (*C.uint8_t)(&tx[0])
@@ -256,11 +256,11 @@ func (d Device) InitiatorTransceiveBitsTimed(tx, txPar []byte, txLength uint, rx
 	}
 
 	if len(tx) != len(txPar) || len(rx) != len(rxPar) {
-		return ESOFT, 0, errors.New("Invariant doesn't hold")
+		return ESOFT, 0, errors.New("invariant doesn't hold")
 	}
 
 	if uint(len(tx))*8 < txLength {
-		return ESOFT, 0, errors.New("Slice shorter than specified bit count")
+		return ESOFT, 0, errors.New("slice shorter than specified bit count")
 	}
 
 	var cptr *C.uint32_t
