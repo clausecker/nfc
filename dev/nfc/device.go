@@ -239,7 +239,7 @@ func (d Device) SupportedModulations(mode int) ([]int, error) {
 
 // Get suported baud rates. Returns either a slice of supported baud rates or an
 // error. This function wraps nfc_device_get_supported_baud_rate().
-func (d Device) SupportedBaudRates(modulationType int) ([]int, error) {
+func (d Device) SupportedBaudRates(modulationType int, mode int) ([]int, error) {
 	if *d.d == nil {
 		return nil, errors.New("device closed")
 	}
@@ -251,6 +251,7 @@ func (d Device) SupportedBaudRates(modulationType int) ([]int, error) {
 	var br_arr *C.nfc_baud_rate
 	ret := C.nfc_device_get_supported_baud_rate(
 		*d.d,
+		C.nfc_mode(mode),
 		C.nfc_modulation_type(modulationType),
 		&br_arr,
 	)
