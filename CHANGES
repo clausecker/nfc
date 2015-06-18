@@ -34,3 +34,9 @@ Release 2.0 (2014-08-30)
    one release as much as possible.
  C Error strings were converted to lower case.
  B Some typos where fixed in comments.
+
+Upcoming release 2.1
+ N Introduce a new function nfc.(*device).SupportedBaudRatesTargetMode()
+   wrapping the corresponding new function in the upcoming 1.7.2 release
+   of the libnfc.
+ C Bump libnfc dependency to version 1.7.2.
