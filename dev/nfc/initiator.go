@@ -289,14 +289,20 @@ func (d Device) InitiatorTransceiveBitsTimed(tx, txPar []byte, txLength uint, rx
 
 // Check target presence. Returns nil on success, an error otherwise. The
 // target has to be selected before you can check its presence. To run the test,
-// one or more commands will be sent to the target.
+// one or more commands will be sent to the target. The t argument can be nil,
+// in this case presence will be tested for the last selected tag.
 func (d Device) InitiatorTargetIsPresent(t Target) error {
 	if *d.d == nil {
 		return errors.New("device closed")
 	}
 
-	ctarget := (*C.nfc_target)(unsafe.Pointer(t.Marshall()))
-	defer C.free(unsafe.Pointer(ctarget))
+	var ctarget *C.nfc_target
+	if t != nil {
+		ctarget = (*C.nfc_target)(unsafe.Pointer(t.Marshall()))
+		defer C.free(unsafe.Pointer(ctarget))
+	} else {
+		ctarget = nil
+	}
 
 	n := C.nfc_initiator_target_is_present(*d.d, ctarget)
 	if n != 0 {

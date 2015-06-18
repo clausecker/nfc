@@ -36,7 +36,10 @@ Release 2.0 (2014-08-30)
  B Some typos where fixed in comments.
 
 Upcoming release 2.1
- N Introduce a new function nfc.(*device).SupportedBaudRatesTargetMode()
+ N Introduce a new function nfc.Device.SupportedBaudRatesTargetMode()
    wrapping the corresponding new function in the upcoming 1.7.2 release
    of the libnfc.
  C Bump libnfc dependency to version 1.7.2.
+ C Allow nil Target parameter to
+   function nfc.Device.InitiatorTargetIsPresent() as supported since
+   release 1.7.1 of the libnfc.
