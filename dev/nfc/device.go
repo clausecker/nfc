@@ -92,8 +92,8 @@ func (d Device) Close() error {
 		return nil
 	}
 
-	*d.d = nil
 	C.nfc_close(*d.d)
+	*d.d = nil
 
 	return nil
 }
