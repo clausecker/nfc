@@ -3,7 +3,7 @@ The code has not been thoroughly tested yet. Please report any errors to the
 project. The API is considered stable as of version 2.0 and will probably not
 change in incompatible ways in the near future.
 
-The current release of this wrapper is release 2.0.1. Successive minor releases
+The current release of this wrapper is release 2.0.2. Successive minor releases
 will be placed in different subfolders as to not change the semantics of code
 that links against a specific version of this wrapper. The patch level is not
 reflected in this scheme as an increase in patch level does not lead to

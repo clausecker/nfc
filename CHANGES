@@ -38,6 +38,11 @@ Release 2.0 (2014-08-30)
 Release 2.0.1 (2015-09-28)
  B Set device pointer to nil after calling nfc_close(), not before.
 
+Release 2.0.2 (2016-01-14)
+ B Fix error handling in (*Device).InitiatorSelectPassiveTarget()
+ B Fix initData handling (ibid.), these fix issue #8
+ R Improve documentation (ibid.)
+
 Upcoming release 2.1
  N Introduce a new function nfc.Device.SupportedBaudRatesTargetMode()
    wrapping the corresponding new function in the upcoming 1.7.2 release

@@ -345,21 +345,32 @@ func (d Device) InitiatorInitSecureElement() error {
 	return Error(C.nfc_initiator_init_secure_element(*d.d))
 }
 
-// Select a passive or emulated tag.
+// Select a passive or emulated tag. initData is used with different kind of
+// data depending on modulation type:
+//  * for an ISO/IEC 14443 type A modulation, initData contains the UID you want to select;
+//  * for an ISO/IEC 14443 type B modulation, initData contains Application Family Identifier (AFI) (see ISO/IEC 14443-3) and optionally a second byte = 0x01 if you want to use probabilistic approach instead of timeslot approach;
+//  * for a FeliCa modulation, initData contains a 5-byte polling payload (see ISO/IEC 18092 11.2.2.5).
+//  * for ISO14443B', ASK CTx and ST SRx, see corresponding standards
+// if nil, default values adequate for the chosen modulation will be used.
 func (d Device) InitiatorSelectPassiveTarget(m Modulation, initData []byte) (Target, error) {
 	if *d.d == nil {
 		return nil, errors.New("device closed")
 	}
 
 	var pnt C.nfc_target
+	var initDataPtr *C.uint8_t = nil
+	var initDataLen C.size_t = 0
+
+	if (initData != nil) {
+		initDataPtr = (*C.uint8_t)(&initData[0])
+		initDataLen = C.size_t(len(initData))
+	}
 
 	n := C.nfc_initiator_select_passive_target(
 		*d.d,
 		C.nfc_modulation{C.nfc_modulation_type(m.Type), C.nfc_baud_rate(m.BaudRate)},
-		(*C.uint8_t)(&initData[0]),
-		C.size_t(len(initData)),
-		&pnt)
-	if n != 0 {
+		initDataPtr, initDataLen, &pnt)
+	if n < 0 {
 		return nil, Error(n)
 	}
 
