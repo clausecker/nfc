@@ -255,17 +255,9 @@ func (d Device) supportedBaudRatesForMode(mode int, modulationType int) ([]int, 
 	var br_arr *C.nfc_baud_rate
 	var ret int
 	if mode == InitiatorMode {
-		ret := C.nfc_device_get_supported_baud_rate(
-			*d.d,
-			C.nfc_modulation_type(modulationType),
-			&br_arr,
-		)
+		ret = int(C.nfc_device_get_supported_baud_rate(*d.d, C.nfc_modulation_type(modulationType), &br_arr))
 	} else { // mode == TargetMode
-		ret := C.nfc_device_get_supported_baud_rate_target_mode(
-			*d.d,
-			C.nfc_modulation_type(modulationType),
-			&br_arr,
-		)
+		ret = int(C.nfc_device_get_supported_baud_rate_target_mode(*d.d, C.nfc_modulation_type(modulationType), &br_arr))
 	}
 
 	if ret != 0 {
@@ -288,14 +280,14 @@ func (d Device) supportedBaudRatesForMode(mode int, modulationType int) ([]int, 
 // slice of supported baud rates or an error. This function wraps
 // nfc_device_get_supported_baud_rate().
 func (d Device) SupportedBaudRates(modulationType int) ([]int, error) {
-	return supportedBaudRatesForMode(InitiatorMode, modulationType)
+	return d.supportedBaudRatesForMode(InitiatorMode, modulationType)
 }
 
 // Get the suported baud rates for target mode. Returns either a
 // slice of supported baud rates or an error. This function wraps
 // nfc_device_get_supported_baud_rate_target_mode().
 func (d Device) SupportedBaudRatesTargetMode(modulationType int) ([]int, error) {
-	return supportedBaudRatesForMode(TargetMode, modulationType)
+	return d.supportedBaudRatesForMode(TargetMode, modulationType)
 }
 
 // Initialize NFC device as an emulated tag. n contains the received byte count
