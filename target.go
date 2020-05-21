@@ -45,9 +45,7 @@ func tString(t Target) string {
 //
 // Marshall() returns a pointer to an nfc_target allocated with C.malloc() that
 // contains the same data as the Target. Don't forget to C.free() the result of
-// Marshall() afterwards. A runtime panic may occur if any slice referenced by a
-// Target has been made larger than the maximum length mentioned in the
-// respective comments.
+// Marshall() afterwards.
 type Target interface {
 	Modulation() Modulation
 	Marshall() uintptr
@@ -86,6 +84,9 @@ func unmarshallTarget(t *C.nfc_target) Target {
 		return &r
 	case Jewel:
 		r := unmarshallJewelTarget(t)
+		return &r
+	case Barcode:
+		r := unmarshallBarcodeTarget(t)
 		return &r
 	case ISO14443b:
 		r := unmarshallISO14443bTarget(t)
@@ -152,9 +153,7 @@ func unmarshallDEPTarget(c *C.nfc_target) DEPTarget {
 
 // Marshall() returns a pointer to an nfc_target allocated with C.malloc() that
 // contains the same data as the Target. Don't forget to C.free() the result of
-// Marshall() afterwards. A runtime panic may occur if any slice referenced by a
-// Target has been made larger than the maximum length mentioned in the
-// respective comments.
+// Marshall() afterwards.
 func (d *DEPTarget) Marshall() uintptr {
 	nt := mallocTarget()
 	dt := (*C.struct_DEPTarget)(unsafe.Pointer(d))
@@ -239,9 +238,7 @@ func unmarshallFelicaTarget(c *C.nfc_target) FelicaTarget {
 
 // Marshall() returns a pointer to an nfc_target allocated with C.malloc() that
 // contains the same data as the Target. Don't forget to C.free() the result of
-// Marshall() afterwards. A runtime panic may occur if any slice referenced by a
-// Target has been made larger than the maximum length mentioned in the
-// respective comments.
+// Marshall() afterwards.
 func (d *FelicaTarget) Marshall() uintptr {
 	nt := mallocTarget()
 	ft := (*C.struct_FelicaTarget)(unsafe.Pointer(d))
@@ -280,9 +277,7 @@ func unmarshallISO14443bTarget(c *C.nfc_target) ISO14443bTarget {
 
 // Marshall() returns a pointer to an nfc_target allocated with C.malloc() that
 // contains the same data as the Target. Don't forget to C.free() the result of
-// Marshall() afterwards. A runtime panic may occur if any slice referenced by a
-// Target has been made larger than the maximum length mentioned in the
-// respective comments.
+// Marshall() afterwards.
 func (d *ISO14443bTarget) Marshall() uintptr {
 	nt := mallocTarget()
 	it := (*C.struct_ISO14443bTarget)(unsafe.Pointer(d))
@@ -322,9 +317,7 @@ func unmarshallISO14443biTarget(c *C.nfc_target) ISO14443biTarget {
 
 // Marshall() returns a pointer to an nfc_target allocated with C.malloc() that
 // contains the same data as the Target. Don't forget to C.free() the result of
-// Marshall() afterwards. A runtime panic may occur if any slice referenced by a
-// Target has been made larger than the maximum length mentioned in the
-// respective comments.
+// Marshall() afterwards.
 func (d *ISO14443biTarget) Marshall() uintptr {
 	nt := mallocTarget()
 	it := (*C.struct_ISO14443biTarget)(unsafe.Pointer(d))
@@ -400,9 +393,7 @@ func unmarshallISO14443b2ctTarget(c *C.nfc_target) ISO14443b2ctTarget {
 
 // Marshall() returns a pointer to an nfc_target allocated with C.malloc() that
 // contains the same data as the Target. Don't forget to C.free() the result of
-// Marshall() afterwards. A runtime panic may occur if any slice referenced by a
-// Target has been made larger than the maximum length mentioned in the
-// respective comments.
+// Marshall() afterwards.
 func (d *ISO14443b2ctTarget) Marshall() uintptr {
 	nt := mallocTarget()
 	it := (*C.struct_ISO14443b2ctTarget)(unsafe.Pointer(d))
@@ -423,7 +414,7 @@ func (t *JewelTarget) String() string {
 	return tString(t)
 }
 
-// Type is always JEWEL
+// Type is always Jewel
 func (t *JewelTarget) Modulation() Modulation {
 	return Modulation{Jewel, t.Baud}
 }
@@ -439,14 +430,49 @@ func unmarshallJewelTarget(c *C.nfc_target) JewelTarget {
 
 // Marshall() returns a pointer to an nfc_target allocated with C.malloc() that
 // contains the same data as the Target. Don't forget to C.free() the result of
-// Marshall() afterwards. A runtime panic may occur if any slice referenced by a
-// Target has been made larger than the maximum length mentioned in the
-// respective comments.
+// Marshall() afterwards.
 func (d *JewelTarget) Marshall() uintptr {
 	nt := mallocTarget()
 	jt := (*C.struct_JewelTarget)(unsafe.Pointer(d))
 
 	C.marshallJewelTarget(nt, jt)
+
+	return uintptr(unsafe.Pointer(nt))
+}
+
+// Thinfilm NFC barcode tag information
+type BarcodeTarget struct {
+	DataLen int
+	Data    [32]byte
+	Baud    int
+}
+
+func (t *BarcodeTarget) String() string {
+	return tString(t)
+}
+
+// Type is always Barcode
+func (t *BarcodeTarget) Modulation() Modulation {
+	return Modulation{Barcode, t.Baud}
+}
+
+// Make a BarcodeTarget from an nfc_barcode_info
+func unmarshallBarcodeTarget(c *C.nfc_target) BarcodeTarget {
+	var bt BarcodeTarget
+
+	C.unmarshallBarcodeTarget((*C.struct_BarcodeTarget)(unsafe.Pointer(&bt)), c)
+
+	return bt
+}
+
+// Marshall() returns a pointer to an nfc_target allocated with C.malloc() that
+// contains the same data as the Target. Don't forget to C.free() the result of
+// Marshall() afterwards.
+func (d *BarcodeTarget) Marshall() uintptr {
+	nt := mallocTarget()
+	bt := (*C.struct_BarcodeTarget)(unsafe.Pointer(d))
+
+	C.marshallBarcodeTarget(nt, bt)
 
 	return uintptr(unsafe.Pointer(nt))
 }

@@ -245,3 +245,26 @@ marshallJewelTarget(nfc_target *nt, const struct JewelTarget *jt)
 	nt->nm.nbr = jt->Baud;
 	nt->nm.nmt = NMT_JEWEL;
 }
+
+extern void
+unmarshallBarcodeTarget(struct BarcodeTarget *bt, const nfc_target *nt)
+{
+	const nfc_barcode_info *bi = &nt->nti.nti;
+
+	bt->DataLen = bi->szDataLen;
+	memcpy(bt->Data, bi->abtData, sizeof(bt->Data));
+
+	bt->Baud = nt->nm.nbr;
+}
+
+extern void
+marshallBarcodeTarget(nfc_target *nt, const struct BarcodeTarget *bt)
+{
+	nfc_barcode_info *bi = &nt->nti.nti;
+
+	bi->szDataLen = bt->DataLen;
+	memcpy(bi->abtData, bt->Data, sizeof(bt->Data));
+
+	nt->nm.nbr = bt->Baud;
+	nt->nm.nmt = NMT_BARCODE;
+}

@@ -137,4 +137,13 @@ struct JewelTarget {
 extern void unmarshallJewelTarget(struct JewelTarget*, const nfc_target*);
 extern void marshallJewelTarget(nfc_target*, const struct JewelTarget*);
 
+struct BarcodeTarget {
+	GoInt   DataLen;
+	uint8_t Data[32];
+	GoInt	Baud;
+};
+
+extern void unmarshallBarcodeTarget(struct BarcodeTarget*, const nfc_target*);
+extern void marshallBarcodeTarget(nfc_target*, const struct BarcodeTarget*);
+
 #endif /* MARSHALL_H */

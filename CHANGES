@@ -52,3 +52,9 @@ Release 2.1.0 (2020-05-22)
    function nfc.Device.InitiatorTargetIsPresent() as supported since
    release 1.7.1 of the libnfc.
  R adapt Go modules and discontinue the subdirectory scheme.
+
+Release 2.2.0 (upcoming)
+ N Provide Device.InitiatorPollTarget wrapping nfc_initiator_poll_target.
+ N Add support for Thinfilm NFC Barcode targets
+ I Due to upstream changes, the value of the modulation type enumeration
+   constants has changed.

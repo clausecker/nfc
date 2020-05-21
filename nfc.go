@@ -118,12 +118,14 @@ const (
 const (
 	ISO14443a = iota + 1
 	Jewel
+	Barcode // Thinfilm NFC Barcode
 	ISO14443b
 	ISO14443bi   // pre-ISO14443B aka ISO/IEC 14443 B' or Type B'
 	ISO14443b2sr // ISO14443-2B ST SRx
 	ISO14443b2ct // ISO14443-2B ASK CTx
 	Felica
 	DEP
+	ISO14443biClass // HID iClass 14443B mode
 )
 
 // NFC baud rates. UNDEFINED is also a valid baud rate, albeit defined
