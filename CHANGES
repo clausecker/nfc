@@ -56,5 +56,6 @@ Release 2.1.0 (2020-05-22)
 Release 2.2.0 (upcoming)
  N Provide Device.InitiatorPollTarget wrapping nfc_initiator_poll_target.
  N Add support for Thinfilm NFC Barcode targets
+ N Add support for NFC ISO14443BiClass, i.e. HID iClass (Picopass) targets
  I Due to upstream changes, the value of the modulation type enumeration
    constants has changed.

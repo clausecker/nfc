@@ -146,4 +146,12 @@ struct BarcodeTarget {
 extern void unmarshallBarcodeTarget(struct BarcodeTarget*, const nfc_target*);
 extern void marshallBarcodeTarget(nfc_target*, const struct BarcodeTarget*);
 
+struct ISO14443biClassTarget {
+	uint8_t	UID[8];
+	GoInt	Baud;
+};
+
+extern void unmarshallISO14443biClassTarget(struct ISO14443biClassTarget*, const nfc_target*);
+extern void marshallISO14443biClassTarget(nfc_target*, const struct ISO14443biClassTarget*);
+
 #endif /* MARSHALL_H */

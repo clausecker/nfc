@@ -268,3 +268,24 @@ marshallBarcodeTarget(nfc_target *nt, const struct BarcodeTarget *bt)
 	nt->nm.nbr = bt->Baud;
 	nt->nm.nmt = NMT_BARCODE;
 }
+
+extern void
+unmarshallISO14443biClassTarget(struct ISO14443biClassTarget *it, const nfc_target *nt)
+{
+	const nfc_iso14443biclass_info *ii = &nt->nti.nhi;
+
+	memcpy(it->UID, ii->abtUID, sizeof(it->UID));
+
+	it->Baud = nt->nm.nbr;
+}
+
+extern void
+marshallISO14443biClassTarget(nfc_target *nt, const struct ISO14443biClassTarget *it)
+{
+	nfc_iso14443biclass_info *ii = &nt->nti.nhi;
+
+	memcpy(ii->abtUID, it->UID, sizeof(it->UID));
+
+	nt->nm.nbr = it->Baud;
+	nt->nm.nmt = NMT_ISO14443BICLASS;
+}

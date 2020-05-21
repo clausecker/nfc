@@ -106,6 +106,9 @@ func unmarshallTarget(t *C.nfc_target) Target {
 	case DEP:
 		r := unmarshallDEPTarget(t)
 		return &r
+	case ISO14443biClass:
+		r := unmarshallISO14443biClassTarget(t)
+		return &r
 	default:
 		panic(errors.New("cannot determine target type"))
 	}
@@ -473,6 +476,44 @@ func (d *BarcodeTarget) Marshall() uintptr {
 	bt := (*C.struct_BarcodeTarget)(unsafe.Pointer(d))
 
 	C.marshallBarcodeTarget(nt, bt)
+
+	return uintptr(unsafe.Pointer(nt))
+}
+
+// NFC ISO14443BiClass, i.e. HID iClass (Picopass) tag information
+type ISO14443biClassTarget struct {
+	UID  [8]byte
+	Baud int
+}
+
+func (t *ISO14443biClassTarget) String() string {
+	return tString(t)
+}
+
+// Type is always ISO14443biClass
+func (t *ISO14443biClassTarget) Modulation() Modulation {
+	return Modulation{ISO14443biClass, t.Baud}
+}
+
+// Make an ISO14443biClassTarget from an nfc_iso14443biclass_info
+func unmarshallISO14443biClassTarget(c *C.nfc_target) ISO14443biClassTarget {
+	var it ISO14443biClassTarget
+
+	C.unmarshallISO14443biClassTarget((*C.struct_ISO14443biClassTarget)(unsafe.Pointer(&it)), c)
+
+	return it
+}
+
+// Marshall() returns a pointer to an nfc_target allocated with C.malloc() that
+// contains the same data as the Target. Don't forget to C.free() the result of
+// Marshall() afterwards. A runtime panic may occur if any slice referenced by a
+// Target has been made larger than the maximum length mentioned in the
+// respective comments.
+func (d *ISO14443biClassTarget) Marshall() uintptr {
+	nt := mallocTarget()
+	it := (*C.struct_ISO14443biClassTarget)(unsafe.Pointer(d))
+
+	C.marshallISO14443biClassTarget(nt, it)
 
 	return uintptr(unsafe.Pointer(nt))
 }
