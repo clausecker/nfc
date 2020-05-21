@@ -20,6 +20,7 @@ import "C"
 import "unsafe"
 import "errors"
 import "fmt"
+import "time"
 
 // NFC device
 type Device struct {
@@ -476,5 +477,58 @@ func (d Device) TargetTransceiveBits(rx []byte, rxPar []byte, rxLength uint) (n 
 		err = Error(n)
 	}
 
+	return
+}
+
+// Poll for NFC targets. Returns polled target count or 0 and an error.
+// modulations is a slice of all modulation types to poll for.  times is the
+// number of times we desire to poll (indefinite polling is not supported).
+// period is the time to wait between polls.  It is rounded up to the next
+// 150 ms and must be between 150 ms and 2.25 s.  If targets are
+// found, one is selected and returned.
+//
+// This function wraps nfc_initiator_poll_target but is extended to lack
+// its limitation to 255 polls.
+func (d Device) InitiatorPollTarget(modulations []Modulation, times int, period time.Duration) (n int, t Target, err error) {
+	ms := period.Milliseconds()
+	if ms <= 0 || ms > 2250 || times < 0 {
+		err = Error(EINVARG)
+		return
+	}
+
+	uiPeriod := C.uchar((ms + 149) / 150)
+
+	if modulations == nil {
+		modulations = make([]Modulation, 0)
+	}
+
+	m := make([]C.nfc_modulation, len(modulations))
+	for i := range modulations {
+		m[i].nmt = C.nfc_modulation_type(modulations[i].Type)
+		m[i].nbr = C.nfc_baud_rate(modulations[i].BaudRate)
+	}
+
+	var ctarget C.nfc_target
+
+	for times > 0 {
+		uiPollNr := C.uchar(times)
+		if times >= 255 {
+			uiPollNr = 254
+		}
+
+		ret := C.nfc_initiator_poll_target(*d.d, &m[0], C.size_t(len(m)), uiPollNr, uiPeriod, &ctarget)
+		if ret < 0 {
+			err = Error(ret)
+			return
+		} else if ret > 0 {
+			n = int(ret)
+			t = unmarshallTarget(&ctarget)
+			return
+		}
+
+		times -= int(uiPollNr)
+	}
+
+	// nothing found
 	return
 }
