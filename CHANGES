@@ -43,7 +43,7 @@ Release 2.0.2 (2016-01-14)
  B Fix initData handling (ibid.), these fix issue #8
  R Improve documentation (ibid.)
 
-Upcoming release 2.1
+Release 2.1.0 (2020-05-22)
  N Introduce a new function nfc.Device.SupportedBaudRatesTargetMode()
    wrapping the corresponding new function in the upcoming 1.7.2 release
    of the libnfc.

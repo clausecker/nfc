@@ -1,8 +1,9 @@
 This is a Go wrapper for the libnfc.
 
-Version 2.0.2 of this wrapper has been written against version 1.7.0.
-The current development version of the wrapper requires version 1.7.2
-or newer.
+You need the following libnfc version to use this code:
+
+    versions <= 2.0.2 need libnfc version 1.7.0 or later
+    version  >= 2.1.0 need libnfc version 1.7.2 or later
 
 The code has not been thoroughly tested yet. Please report any errors to
 the project. The API is considered stable as of version 2.0 and will
@@ -11,7 +12,8 @@ probably not change in incompatible ways in the near future.
 Version 2.0.2 and earlier of this wrapper have been developed before the
 advent of Go modules.  For this reason, they use a weird homecooked
 scheme for their versioning involving the 2.0 and latest directories.
-These can safely be ignored for new developments.
+These can safely be ignored for new developments.  Using Go modules,
+only version 2.1.0 and later are available.
 
 To use this library, install libnfc version 1.7.2 or newer and import
 
