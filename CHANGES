@@ -60,3 +60,6 @@ Release 2.1.1 (2020-05-22)
  I Due to upstream changes, the value of the modulation type enumeration
    constants has changed.  This has been forgotton for the 2.1.0 release
    which is why this patch release is needed.
+
+Release 2.1.2 (2020-05-22)
+ I Fix Go import paths (sorry, this is my first time using go mod)
