@@ -2,7 +2,7 @@ This is a Go wrapper for the libnfc.
 
 You need the following libnfc version to use this code:
 
-    versions <= 2.0.2 need libnfc version 1.7.0 or later
+    versions <= 2.0.2 need libnfc version 1.7.0
     version  >= 2.1.0 need libnfc version 1.7.2 or later
 
 The code has not been thoroughly tested yet. Please report any errors to
