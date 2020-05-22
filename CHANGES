@@ -63,3 +63,9 @@ Release 2.1.1 (2020-05-22)
 
 Release 2.1.2 (2020-05-22)
  I Fix Go import paths (sorry, this is my first time using go mod)
+
+Release 2.1.3 (2020-05-22)
+ I In reaction to the newly released libnfc 1.8.0 which fixes the ABI
+   breakage, revert the enumeration order changes and retract releases
+   2.1.0 to 2.1.2.
+ N Requires libnfc version >= 1.8.0.
