@@ -74,3 +74,6 @@ Release 2.1.4 (upcoming)
  I Following a rename of my github account, change import path.  The
    old import path still works for now but is not recommended for new
    developments.
+ I Delete 2.0 directory with old library version.  It will still be
+   available for import on old tool chains that aren't module aware.
+
