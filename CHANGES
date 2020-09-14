@@ -69,3 +69,8 @@ Release 2.1.3 (2020-05-22)
    breakage, revert the enumeration order changes and retract releases
    2.1.0 to 2.1.2.
  N Requires libnfc version >= 1.8.0.
+
+Release 2.1.4 (upcoming)
+ I Following a rename of my github account, change import path.  The
+   old import path still works for now but is not recommended for new
+   developments.
