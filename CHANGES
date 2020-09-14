@@ -70,10 +70,11 @@ Release 2.1.3 (2020-05-22)
    2.1.0 to 2.1.2.
  N Requires libnfc version >= 1.8.0.
 
-Release 2.1.4 (upcoming)
+Release 2.1.4 (2020-09-14)
  I Following a rename of my github account, change import path.  The
    old import path still works for now but is not recommended for new
    developments.
  I Delete 2.0 directory with old library version.  It will still be
    available for import on old tool chains that aren't module aware.
-
+   As this directory is not part of the API, removing it is not an
+   API break.
