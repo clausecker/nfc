@@ -26,12 +26,14 @@ struct target_listing {
 // this function works analogeous to list_devices_wrapper but for the function
 // nfc_initiator_list_passive_targets.
 struct target_listing list_targets_wrapper(nfc_device *device, const nfc_modulation nm) {
-	size_t targets_len = 16, actual_count; // 16
+	size_t targets_len = 16;
+	int actual_count = 0;
 	nfc_target *targets = NULL, *targets_tmp;
 	struct target_listing  tar;
 
 	// call nfc_list_devices as long as our array might be too short
-	for (;;) {
+	// limit to max 128 results
+	for (int i=0;i<128;i++) {
 		targets_tmp = realloc(targets, targets_len * sizeof *targets);
 		if (targets_tmp == NULL) {
 			actual_count = NFC_ESOFT;
@@ -41,7 +43,9 @@ struct target_listing list_targets_wrapper(nfc_device *device, const nfc_modulat
 		targets = targets_tmp;
 		actual_count = nfc_initiator_list_passive_targets(device, nm, targets, targets_len);
 
-		// also covers the case where actual_count is an error
+		// negative actual_count is an error
+		if (actual_count < 0) break;
+
 		if (actual_count < targets_len) break;
 
 		targets_len += 16;
