@@ -88,7 +88,7 @@ func (d Device) LastError() error {
 
 // Close an NFC device.
 func (d Device) Close() error {
-	if *d.d == nil {
+	if d.d == nil || *d.d == nil {
 		// closing a closed device is a nop
 		return nil
 	}
