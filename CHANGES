@@ -78,3 +78,16 @@ Release 2.1.4 (2020-09-14)
    available for import on old tool chains that aren't module aware.
    As this directory is not part of the API, removing it is not an
    API break.
+
+Release 2.2.0 (2024-03-09)
+ N Add new functions Modulation.String(), Modulation.GoString()
+ N Add new symbols ModulationTypes and BaudRates
+ C Add a unit test for ListDevices()
+ C Add a unit test for Device.InitiatorListPassiveTargets()
+ C Use pkg-config to find libnfc.  If this is undesirable, supply build
+   tag nopkgconfig / no_pkgconfig to switch back to just linking with
+   -lnfc.
+ C Permit call to Device.Close() on uninitialised Device struct.
+   This permits the usual dev, err := nfc.Open(...); defer dev.Close()
+   idiom.
+ B Fix an infinite loop in Device.InitiatorListPassiveTargets (issue #12)
