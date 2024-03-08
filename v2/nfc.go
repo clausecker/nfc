@@ -1,4 +1,4 @@
-// Copyright (c) 2014, 2020 Robert Clausecker <fuzxxl@gmail.com>
+// Copyright (c) 2014, 2020, 2024 Robert Clausecker <fuzxxl@gmail.com>
 //
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -12,12 +12,13 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>
 
-// This package wraps the libnfc to provide an API for Go. Most documentation
+// Package nfc wraps the libnfc to provide an API for Go. Most documentation
 // was taken unchanged from the documentation inside the libnfc. Some functions
 // and names have been altered to fit the conventions and idioms used in Go.
 //
-// This package is licensed under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, version 3.
+// To use this package, obtain and install libnfc.  By default, pkg-config is
+// used to find and link libnfc.  If you cannot use pkg-config, you can compile
+// with build-tag nopkgconfig or no_pkgconfig to instead link with -lnfc.
 package nfc
 
 import "fmt"
