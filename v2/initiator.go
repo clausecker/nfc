@@ -1,4 +1,4 @@
-// Copyright (c) 2014--2016 Robert Clausecker <fuzxxl@gmail.com>
+// Copyright (c) 2014--2016, 2024 Robert Clausecker <fuzxxl@gmail.com>
 //
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -23,10 +23,11 @@ struct target_listing {
 	nfc_target *entries;
 };
 
-// this function works analogeous to list_devices_wrapper but for the function
+// this function works analoguous to list_devices_wrapper but for the function
 // nfc_initiator_list_passive_targets.
 struct target_listing list_targets_wrapper(nfc_device *device, const nfc_modulation nm) {
-	size_t targets_len = 16, actual_count; // 16
+	size_t targets_len = 16;
+	int actual_count;
 	nfc_target *targets = NULL, *targets_tmp;
 	struct target_listing  tar;
 
@@ -41,9 +42,10 @@ struct target_listing list_targets_wrapper(nfc_device *device, const nfc_modulat
 		targets = targets_tmp;
 		actual_count = nfc_initiator_list_passive_targets(device, nm, targets, targets_len);
 
-		// also covers the case where actual_count is an error
-		if (actual_count < targets_len) break;
+		if (actual_count < 0 || actual_count < targets_len)
+			break;
 
+		// array was full, retry with some more space
 		targets_len += 16;
 	}
 
