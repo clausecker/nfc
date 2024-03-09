@@ -1,4 +1,4 @@
-// Copyright (c) 2014, 2020 Robert Clausecker <fuzxxl@gmail.com>
+// Copyright (c) 2014, 2020, 2024 Robert Clausecker <fuzxxl@gmail.com>
 //
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -12,15 +12,17 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>
 
-// This package wraps the libnfc to provide an API for Go. Most documentation
+// Package nfc wraps the libnfc to provide an API for Go. Most documentation
 // was taken unchanged from the documentation inside the libnfc. Some functions
 // and names have been altered to fit the conventions and idioms used in Go.
 //
-// This package is licensed under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation, version 3.
+// To use this package, obtain and install libnfc.  By default, pkg-config is
+// used to find and link libnfc.  If you cannot use pkg-config, you can compile
+// with build-tag nopkgconfig or no_pkgconfig to instead link with -lnfc.
 package nfc
 
 import "fmt"
+import "strconv"
 
 // Maximum length for an NFC connection string
 const BufsizeConnstring = 1024
@@ -143,10 +145,74 @@ const (
 	InitiatorMode
 )
 
+// Names corresponding to the NFC modulation types
+var ModulationTypes = [...]string{
+	0:               "0",
+	ISO14443a:       "ISO14443a",
+	Jewel:           "Jewel",
+	ISO14443b:       "ISO14443b",
+	ISO14443bi:      "ISO14443bi",
+	ISO14443b2sr:    "ISO14443b2sr",
+	ISO14443b2ct:    "ISO14443b2ct",
+	Felica:          "Felica",
+	DEP:             "DEP",
+	Barcode:         "Barcode",
+	ISO14443biClass: "ISO14443biClass",
+}
+
+// Baud rates corresponding to the baud rate enumeration constants
+var BaudRates = [...]string{
+	Undefined: "Undefined",
+	Nbr106:    "106",
+	Nbr212:    "212",
+	Nbr424:    "424",
+	Nbr847:    "847",
+}
+
 // NFC modulation structure. Use the supplied constants.
 type Modulation struct {
 	Type     int
 	BaudRate int
+}
+
+// Print a modulation in a human readable manner.
+func (m Modulation) String() string {
+	var typeStr, brStr string
+
+	if 0 <= m.Type && m.Type < len(ModulationTypes) {
+		typeStr = ModulationTypes[m.Type]
+	} else {
+		typeStr = strconv.Itoa(m.Type)
+	}
+
+	if 0 <= m.BaudRate && m.BaudRate < len(BaudRates) {
+		brStr = BaudRates[m.BaudRate] + " kbps"
+	} else {
+		brStr = strconv.Itoa(m.BaudRate)
+	}
+
+	return typeStr + " (" + brStr + ")"
+}
+
+// Print a modulation in Go syntax.
+func (m Modulation) GoString() string {
+	var typeStr, brStr string
+
+	if 0 <= m.Type && m.Type < len(ModulationTypes) {
+		typeStr = "nfc." + ModulationTypes[m.Type]
+	} else {
+		typeStr = strconv.Itoa(m.Type)
+	}
+
+	if m.BaudRate == 0 {
+		brStr = "nfc.Undefined"
+	} else if 0 < m.BaudRate && m.BaudRate < len(BaudRates) {
+		brStr = "nfc.Nbr" + BaudRates[m.BaudRate]
+	} else {
+		brStr = strconv.Itoa(m.BaudRate)
+	}
+
+	return "nfc.Modulation{Type: " + typeStr + ", BaudRate: " + brStr + "}"
 }
 
 // An error as reported by various methods of Device. If device returns an error

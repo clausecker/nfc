@@ -15,7 +15,6 @@
 package nfc
 
 /*
-#cgo LDFLAGS: -lnfc
 #include <stdlib.h>
 #include <nfc/nfc.h>
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2014--2016 Robert Clausecker <fuzxxl@gmail.com>
+// Copyright (c) 2014--2016, 2024 Robert Clausecker <fuzxxl@gmail.com>
 //
 // This program is free software: you can redistribute it and/or modify it
 // under the terms of the GNU Lesser General Public License as published by the
@@ -23,10 +23,11 @@ struct target_listing {
 	nfc_target *entries;
 };
 
-// this function works analogeous to list_devices_wrapper but for the function
+// this function works analoguous to list_devices_wrapper but for the function
 // nfc_initiator_list_passive_targets.
 struct target_listing list_targets_wrapper(nfc_device *device, const nfc_modulation nm) {
-	size_t targets_len = 16, actual_count; // 16
+	size_t targets_len = 16;
+	int actual_count;
 	nfc_target *targets = NULL, *targets_tmp;
 	struct target_listing  tar;
 
@@ -41,9 +42,10 @@ struct target_listing list_targets_wrapper(nfc_device *device, const nfc_modulat
 		targets = targets_tmp;
 		actual_count = nfc_initiator_list_passive_targets(device, nm, targets, targets_len);
 
-		// also covers the case where actual_count is an error
-		if (actual_count < targets_len) break;
+		if (actual_count < 0 || actual_count < targets_len)
+			break;
 
+		// array was full, retry with some more space
 		targets_len += 16;
 	}
 
@@ -183,9 +185,9 @@ func (d Device) InitiatorTransceiveBits(tx, txPar []byte, txLength uint, rx, rxP
 // This function is similar to Device.InitiatorTransceiveBytes() with the
 // following differences:
 //
-//  - A precise cycles counter will indicate the number of cycles between emission & reception of frames.
-//  - Only modes with EASY_FRAMING option disabled are supported.
-//  - Overall communication with the host is heavier and slower.
+//   - A precise cycles counter will indicate the number of cycles between emission & reception of frames.
+//   - Only modes with EASY_FRAMING option disabled are supported.
+//   - Overall communication with the host is heavier and slower.
 //
 // By default, the timer configuration tries to maximize the precision, which
 // also limits the maximum cycle count before saturation / timeout. E.g. with
@@ -235,9 +237,9 @@ func (d Device) InitiatorTransceiveBytesTimed(tx, rx []byte, cycles uint32) (n i
 // This function is similar to Device.InitiatorTransceiveBits() with the
 // following differences:
 //
-//  - A precise cycles counter will indicate the number of cycles between emission & reception of frames.
-//  - Only modes with EASY_FRAMING option disabled are supported and CRC must be handled manually.
-//  - Overall communication with the host is heavier and slower.
+//   - A precise cycles counter will indicate the number of cycles between emission & reception of frames.
+//   - Only modes with EASY_FRAMING option disabled are supported and CRC must be handled manually.
+//   - Overall communication with the host is heavier and slower.
 //
 // By default the timer configuration tries to maximize the precision, which
 // also limits the maximum cycle count before saturation / timeout. E.g. with
@@ -316,17 +318,17 @@ func (d Device) InitiatorTargetIsPresent(t Target) error {
 // used to communicate to passive RFID tags and active NFC devices. The reader
 // will act as initiator to communicate peer 2 peer (NFCIP) to other active NFC
 // devices. The NFC device will be initialized with the following properties:
-//  * CRC is handled by the device (NP_HANDLE_CRC = true)
-//  * Parity is handled the device (NP_HANDLE_PARITY = true)
-//  * Cryto1 cipher is disabled (NP_ACTIVATE_CRYPTO1 = false)
-//  * Easy framing is enabled (NP_EASY_FRAMING = true)
-//  * Auto-switching in ISO14443-4 mode is enabled (NP_AUTO_ISO14443_4 = true)
-//  * Invalid frames are not accepted (NP_ACCEPT_INVALID_FRAMES = false)
-//  * Multiple frames are not accepted (NP_ACCEPT_MULTIPLE_FRAMES = false)
-//  * 14443-A mode is activated (NP_FORCE_ISO14443_A = true)
-//  * speed is set to 106 kbps (NP_FORCE_SPEED_106 = true)
-//  * Let the device try forever to find a target (NP_INFINITE_SELECT = true)
-//  * RF field is shortly dropped (if it was enabled) then activated again
+//   - CRC is handled by the device (NP_HANDLE_CRC = true)
+//   - Parity is handled the device (NP_HANDLE_PARITY = true)
+//   - Cryto1 cipher is disabled (NP_ACTIVATE_CRYPTO1 = false)
+//   - Easy framing is enabled (NP_EASY_FRAMING = true)
+//   - Auto-switching in ISO14443-4 mode is enabled (NP_AUTO_ISO14443_4 = true)
+//   - Invalid frames are not accepted (NP_ACCEPT_INVALID_FRAMES = false)
+//   - Multiple frames are not accepted (NP_ACCEPT_MULTIPLE_FRAMES = false)
+//   - 14443-A mode is activated (NP_FORCE_ISO14443_A = true)
+//   - speed is set to 106 kbps (NP_FORCE_SPEED_106 = true)
+//   - Let the device try forever to find a target (NP_INFINITE_SELECT = true)
+//   - RF field is shortly dropped (if it was enabled) then activated again
 func (d Device) InitiatorInit() error {
 	if *d.d == nil {
 		return errors.New("device closed")
@@ -353,10 +355,11 @@ func (d Device) InitiatorInitSecureElement() error {
 
 // Select a passive or emulated tag. initData is used with different kind of
 // data depending on modulation type:
-//  * for an ISO/IEC 14443 type A modulation, initData contains the UID you want to select;
-//  * for an ISO/IEC 14443 type B modulation, initData contains Application Family Identifier (AFI) (see ISO/IEC 14443-3) and optionally a second byte = 0x01 if you want to use probabilistic approach instead of timeslot approach;
-//  * for a FeliCa modulation, initData contains a 5-byte polling payload (see ISO/IEC 18092 11.2.2.5).
-//  * for ISO14443B', ASK CTx and ST SRx, see corresponding standards
+//   - for an ISO/IEC 14443 type A modulation, initData contains the UID you want to select;
+//   - for an ISO/IEC 14443 type B modulation, initData contains Application Family Identifier (AFI) (see ISO/IEC 14443-3) and optionally a second byte = 0x01 if you want to use probabilistic approach instead of timeslot approach;
+//   - for a FeliCa modulation, initData contains a 5-byte polling payload (see ISO/IEC 18092 11.2.2.5).
+//   - for ISO14443B', ASK CTx and ST SRx, see corresponding standards
+//
 // if nil, default values adequate for the chosen modulation will be used.
 func (d Device) InitiatorSelectPassiveTarget(m Modulation, initData []byte) (Target, error) {
 	if *d.d == nil {

@@ -22,10 +22,16 @@ To use this library, install libnfc version 1.8.0 or newer and import
 
     github.com/clausecker/nfc/v2
 
-into your project.  This project uses go modules for versionning and
-tries its best to follow the usual guidelines for interface stability.
+into your project.  Pkg-config is used to find libnfc automatically.  If
+this does not work, you can compile with tag nopkgconfig or no_pkgconfig
+to instruct the package to instead simply link with -lnfc.  You'll then
+have to manually set things up for suitable -I... and -L... options to
+be supplied so the header files and library are found.
 
-Copyright (c) 2014--2020 Robert Clausecker <fuzxxl@gmail.com>
+This project uses go modules for versioning and tries its best to follow
+the usual guidelines for interface stability.
+
+Copyright (c) 2014--2020, 2024 Robert Clausecker <fuz@fuz.su>
 
 This program is free software: you can redistribute it and/or modify it
 under the terms of the GNU Lesser General Public License as published by

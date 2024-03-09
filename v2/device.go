@@ -88,7 +88,7 @@ func (d Device) LastError() error {
 
 // Close an NFC device.
 func (d Device) Close() error {
-	if *d.d == nil {
+	if d.d == nil || *d.d == nil {
 		// closing a closed device is a nop
 		return nil
 	}
@@ -301,14 +301,14 @@ func (d Device) SupportedBaudRatesTargetMode(modulationType int) ([]int, error) 
 //
 // This function initializes NFC device in target mode in order to emulate a tag
 // as the specified target t.
-//  - Crc is handled by the device (HANDLE_CRC = true)
-//  - Parity is handled the device (HANDLE_PARITY = true)
-//  - Cryto1 cipher is disabled (ACTIVATE_CRYPTO1 = false)
-//  - Auto-switching in ISO14443-4 mode is enabled (AUTO_ISO14443_4 = true)
-//  - Easy framing is disabled (EASY_FRAMING = false)
-//  - Invalid frames are not accepted (ACCEPT_INVALID_FRAMES = false)
-//  - Multiple frames are not accepted (ACCEPT_MULTIPLE_FRAMES = false)
-//  - RF field is dropped
+//   - Crc is handled by the device (HANDLE_CRC = true)
+//   - Parity is handled the device (HANDLE_PARITY = true)
+//   - Cryto1 cipher is disabled (ACTIVATE_CRYPTO1 = false)
+//   - Auto-switching in ISO14443-4 mode is enabled (AUTO_ISO14443_4 = true)
+//   - Easy framing is disabled (EASY_FRAMING = false)
+//   - Invalid frames are not accepted (ACCEPT_INVALID_FRAMES = false)
+//   - Multiple frames are not accepted (ACCEPT_MULTIPLE_FRAMES = false)
+//   - RF field is dropped
 //
 // Warning: Be aware that this function will wait (hang) until a command is
 // received that is not part of the anti-collision. The RATS command for example
