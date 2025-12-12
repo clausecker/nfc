@@ -408,11 +408,10 @@ func (d Device) InitiatorListPassiveTargets(m Modulation) ([]Target, error) {
 		return nil, Error(tar.count)
 	}
 
+	entries := unsafe.Slice(tar.entries, tar.count)
 	targets := make([]Target, tar.count)
 	for i := range targets {
-		// index the C array using pointer arithmetic
-		ptr := uintptr(unsafe.Pointer(tar.entries)) + uintptr(i)*unsafe.Sizeof(*tar.entries)
-		targets[i] = unmarshallTarget((*C.nfc_target)(unsafe.Pointer(ptr)))
+		targets[i] = unmarshallTarget(&entries[i])
 	}
 
 	return targets, nil

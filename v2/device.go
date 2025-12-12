@@ -232,7 +232,7 @@ func (d Device) SupportedModulations(mode int) ([]int, error) {
 
 	for *(*mod)(ptr) != 0 {
 		mods = append(mods, int(*(*mod)(ptr)))
-		ptr = unsafe.Pointer(uintptr(ptr) + unsafe.Sizeof(*mt_arr))
+		ptr = unsafe.Add(ptr, unsafe.Sizeof(*mt_arr))
 	}
 
 	return mods, nil
@@ -271,7 +271,7 @@ func (d Device) supportedBaudRatesForMode(mode int, modulationType int) ([]int, 
 
 	for *(*br)(ptr) != 0 {
 		brs = append(brs, int(*(*br)(ptr)))
-		ptr = unsafe.Pointer(uintptr(ptr) + unsafe.Sizeof(*br_arr))
+		ptr = unsafe.Add(ptr, unsafe.Sizeof(*br_arr))
 	}
 
 	return brs, nil
